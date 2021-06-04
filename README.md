@@ -1,7 +1,7 @@
-# Mini curso junio 2021: Análisis de enriquecimiento funcional de grupos de genes en R
+# Mini curso junio 2021: Análisis de enriquecimiento funcional de conjuntos de genes en R
 
 
-Este es el material del mini curso "Análisis de enriquecimiento funcional de grupos de genes en R" ofrecido por la Red Mexicana de Bioinformática.
+Este es el material del mini curso "Análisis de enriquecimiento funcional de conjuntos de genes en R" ofrecido por la Red Mexicana de Bioinformática.
 
 Fecha: 12 de junio de 2021
 

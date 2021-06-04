@@ -1,0 +1,29 @@
+.reveal h1, .reveal h2, .reveal h3 {
+  word-wrap: normal;
+  -moz-hyphens: none;
+}
+
+.small-code pre code {
+  font-size: 1em;
+}
+
+.footer {
+  color: black; background: #E8E8E8;
+  position: fixed; top: 90%;
+  text-align:center; width:100%;
+}
+
+.midcenter {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+}
+
+.reveal .slides {
+  width: 90% !important;
+  height: 90% !important;
+}
+
+.reveal .slides section .slideContent {
+  font-size: 24pt;
+}
