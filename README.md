@@ -5,9 +5,9 @@ Este es el material del mini curso "Análisis de enriquecimiento funcional de gr
 
 Fecha: 12 de junio de 2021
 
-Instructores:
+Instructor:
 
 - [Dr. Robert Castelo]()
-- [M.C. Erick Cuevas Fernández]()
+
 
 Para descargar este material da click en el botón **Code** y selecciona la opción **Download zip**. Si lo prefieres, puedes clonar el repositorio en tu computadora usando git clone desde tu terminal.
