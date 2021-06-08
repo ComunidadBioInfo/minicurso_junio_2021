@@ -1,0 +1,374 @@
+---
+  title: "Mini curso: Análisis de enriquecimiento funcional de conjuntos de genes en R"
+  author: Robert Castelo
+  output:
+    xaringan::moon_reader:
+      css: [default, default-fonts, custom.css]
+      seal: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE, width=80)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment.char="")
+
+## from http://yihui.name/knitr/hooks#chunk_hooks
+knitr::knit_hooks$set(small.mar=function(before, options, envir) {
+                      if (before) par(mar=c(4, 5, 1, 1)) ## smaller margin on top and right
+})
+```
+
+class: inverse, center, middle
+background-image: url(img/portada_curso.jpg)
+background-size: contain
+
+---
+
+class: title-slide, middle, center
+
+# Mini curso: Análisis de enriquecimiento funcional de conjuntos de genes en R
+
+.large[Robert Castelo]
+
+.large[robert.castelo@upf.edu | @robertclab]
+
+.large[Universidad Pompeu Fabra | Barcelona]
+
+<img style="width:70px" src="img/logoUPFsmall.png"/>
+
+---
+
+# Vías biológicas diferencialmente expresadas
+
+* La interpretación de una lista de genes diferencialmente expresados (DE) suele ser más util cuando la hacemos en términos de vías biológicas (_biological pathways_).
+
+* Una **vía biológica** es una serie de acciones entre moléculas de una célula que conduce a un determinado producto o a un cambio en la célula; vean la página educacional correspondiente del
+[NHGRI](https://www.genome.gov/es/about-genomics/fact-sheets/Vias-Biologicas) para una descripción más ámplia.
+
+* Dado que los genes actúan colectivamente bajo el control de programas de regulación molecular, un modelo
+más cercano a la biología subyacente es aquel en que las vías biológicas son las que se expresan diferencialmente.
+
+* Una aproximación sería intentar hacer el análisis de expresión diferencial **directamente** a nivel de vía
+biológica, o **indirectamente** buscando la sobre-representación (enriquecimiento) de nuestros genes DE en
+cada vía de **interés**.
+
+---
+
+# Definiciones de vías biológicas
+
+* Consideremos primero restrigir la búsqueda de vías biológicas DE a aquellas que son conocidas.
+
+* Bases de datos como [Reactome](https://www.reactome.org) o [KEGG](https://www.genome.jp/kegg)
+anotan información de la literatura sobre los genes, la proteinas and las reacciones que forman
+las vías biológicas.
+
+* Una forma simple pero muy útil de definir vías biológicas es en terminos de **conjuntos de genes**,
+irrespectivamente de las interacciones moleculares que pueda haber entre ellos y/o sus productos.
+
+* Hay muchas bases de datos de conjuntos de genes, siendo las más populares
+[The Gene Ontology (GO) project](http://geneontology.org) y
+[The Molecular Signatures Database (MSigDB)](https://www.gsea-msigdb.org/gsea/msigdb).
+
+* A menudo las bases de datos no incluyen las vías biológicas que són más relevantes al sistema
+que estamos estudiando. En tal caso, deberíamos de o bien curar nuestros propios conjuntos de genes,
+o bien utilizar técnicas para inferirlos a partir de los datos.
+
+---
+
+# Definiciones de vías biológicas
+
+* Por ejemplo, piensen en genes que codifican por proteinas involucradas en la respuesta inmune innata.
+Concretamente, aquellos q detectan patógenos humanos.
+
+
+.center2[
+<img style="margin-top:20%" src="img/TLRs.jpg" width="400px"/>
+]
+
+.footnote[Fig. 1. Christmas P. Toll-Like Receptors: Sensors that Detect Infection. <a href="https://www.nature.com/scitable/topicpage/toll-like-receptors-sensors-that-detect-infection-14396559#"><em>Nature Education</em>, 3(9):85, 2010.</a>]
+
+---
+
+# Idea general del enriquecimiento functional
+
+* Teniendo en mente la definición de la vía biológica previa, qué podríamos concluir a partir de la siguiente
+gráfica de tipo volcán?
+
+.center2[
+<img style="margin-top:25%" src="img/CostaCastelo16fig1a.png" width="350px"/>
+]
+
+.footnote[Fig. 1a. Costa D and Castelo R. Umbilical cord gene expression reveals the molecular architecture of the fetal inflammatory response in extremely preterm newborns. <a href="https://dx.doi.org/10.1038/pr.2015.233"><em>Pediatric Research</em>, 79:473-481, 2016.</a>]
+
+---
+
+# Idea general del enriquecimiento functional
+
+* Una forma conveniente de encontrar vías biológicas DE, en términos de conjuntos de genes DE, es detectando
+lo que se suele llamar un **enriquecimiento funcional** a través de los siguientes dos pasos:
+  <br>
+  1. Buscar genes DE.
+  2. Para cada conjunto de genes, verificar si esos genes DE pertenecen a ese conjunto
+     en una proporción que excede cualquier expectativa de encontrar ese número de genes
+     en ese conjunto únicamente por azar.
+
+* En este contexto, cuando un conjunto de genes contiene **más** genes DE que los que podríamos esperar
+por puro azar, decimos que este conjunto de genes esta **enriquecido** en genes DE.
+
+* Una forma fácil de aplicar esta estrategia es utilizando la llamada
+[prueba exacta de Fisher ](https://es.wikipedia.org/wiki/Prueba_exacta_de_Fisher)
+(también conocida como prueba hipergeométrica).
+
+---
+
+# La prueba exacta de Fisher
+
+* **Hipótesis nula**: el conjunto de genes no incluye más genes DE que los que podríamos esperar únicamente
+por azar. Esta hipótesis nula se suele formalizar con el llamado **modelo de la urna**:
+
+.left-column[
+<img src="img/RenaissanceUrn.png" style="margin-left:10px; width:100%">
+<img src="img/blackAndWhiteBalls.png" style="margin-left:10px; width:100%">
+]
+
+.right-column[
+* Universo de genes: todos los genes que **consideramos**.
+* Hay una bola en la urna para cada gen del universo de genes.
+* Cada bola está etiquetada con un único identificador de gen.
+* Las bolas blancas representan genes **DE**.
+* Las bolas negras representan genes **no-DE**.
+* Sacar a ciegas (uniformemente al azar) tantas bolas de la urna
+  como genes tenemos en el conjunto de genes para el que hacemos la
+  prueba, sin volverlas a poner en la urna (muestreo **sin reemplazamiento**).
+* El número de **bolas blancas** sacadas de esta manera de la urna (i.e., el número
+  de genes DE del conjunto para el que hacemos la prueba) sigue una
+  [distribución hipergeométrica](https://es.wikipedia.org/wiki/Distribuci%C3%B3n_hipergeom%C3%A9trica).
+]
+
+---
+
+# La prueba exacta de Fisher
+
+* Consideramos las siguientes cantidades:
+
+  * $N$ es el número total de genes __considerados__ (tamaño de nuestro universo de genes).
+  * $n$ es el número de genes DE.
+  * $m$ es el número de genes del conjunto para el que hacemos la prueba.
+  * $k$ es el número de genes DE en el conjunto para el que hacemos la prueba.
+
+* La [prueba exacta de Fisher](https://es.wikipedia.org/wiki/Prueba_exacta_de_Fisher)
+se utiliza ampliamente en el análisis de tablas de contingencia resultantes de clasificar
+objetos a través de dos factores los cuales en nuestro caso son la pertenencia a un conjunto
+de genes y si un gen es DE o no:
+
+
+GENES               | DE    | no-DE     | Total  
+--------------------|-------|-----------|------
+DENTRO DEL CONJUNTO |  $k$  | $m-k$     | $m$
+FUERA DEL CONJUNTO  | $n-k$ | $N+k-n-m$ | $N-m$
+TOTAL               | $n$   | $N-n$     | $N$
+
+---
+
+# La prueba exacta de Fisher
+
+* Dados los valores $N$, $n$, $m$ y $k$ y una variable aleatoria $X$ representando los posibles
+resultados del experimento con la urna, la probabilidad de observar exactamente $k$ genes en el
+conjunto de genes para el que hacemos la prueba es:
+
+$$ \textrm{Pr}(X=k) = \frac{ {m \choose k} {N-m \choose n-k} }{ N \choose n }\,. $$
+
+* La probabilidad de observar $k$ **o más** genes DE en un conjunto de genes bajo la hipótesis
+nula es:
+
+$$ \textrm{Pr}(X >= k)=\sum_{x=k}^{\textrm{min}(m, n)} \frac{ {m\choose x} {N-m\choose n-x} }{ {N\choose n} }\,. $$
+* Esta probabilidad corresponde al $p$-valor de una
+[prueba exacta de Fisher](https://es.wikipedia.org/wiki/Prueba_exacta_de_Fisher) unilateral (_one-tailed_)
+para la hipótesis nula de no-asociación entre dos factores.
+
+* Este es el $p$-valor para la hipótesis nula de no-enriquecimiento de genes
+DE en el conjunto de genes. Cuanto menor sea el $p$-valor, menos consistente con el puro azar
+será la observación de los $k$ genes DE en el conjunto.
+
+---
+
+class: small-code
+
+# La prueba exacta de Fisher
+
+* Recordemos la fórmula de la probabilidad de observar $k$ **o mas** genes DE en un conjunto de genes bajo
+la hipótesis nula:
+
+$$ \textrm{Pr}(X >= k)=\sum_{x=k}^{\textrm{min}\{m, n\}} \frac{ {m\choose x} {N-m\choose n-x} }{ {N\choose n} }\,. $$
+
+* Consideremos un ejemplo de juguete donde tenemos unos datos de expresión génica para $N=10$ genes,
+de los cuales $m=4$ pertenecen a un conjunto de genes de nuestro interés y donde identificamos $n=2$
+genes como DE. Supongamos que entre los $n=2$ genes DE hay $k=1$ que pertenece al conjunto de genes.
+Cuál sería el $p$-valor que nos dice si este conjunto de genes esta enriquecido significativamente en
+genes DE?
+
+```{r}
+N <- 10
+m <- 4
+n <- 2
+k <- 1
+choose(m, 1) * choose(N-m, n-1) / choose(N, n) + choose(m, 2) * choose(N-m, n-2) / choose(N, n)
+```
+
+---
+
+class: small-code
+
+# La prueba exacta de Fisher
+
+* El cálculo anterior lo podemos hacer directamente utilizando la función de R `phyper()` para
+calcular la masa de la distribución hipergeométrica de la siguiente forma:
+
+```{r}
+phyper(k-1, m, N-m, n, lower.tail=FALSE)
+```
+
+* Esto nos permite jugar facilmente con las cantidades involucradas en este cálculo, por ejemplo
+aumentando el número de genes $N$ en nuestros datos de expresión.
+
+```{r}
+N <- 11
+phyper(k-1, m, N-m, n, lower.tail=FALSE)
+N <- 12
+phyper(k-1, m, N-m, n, lower.tail=FALSE)
+N <- 13
+phyper(k-1, m, N-m, n, lower.tail=FALSE)
+```
+
+---
+
+class: small-code
+
+# La prueba exacta de Fisher
+
+* El $p$-valor de la prueba depende del tamaño $N$ del universo de los genes!
+
+```{r universeByN, fig.align="center", fig.width=5, fig.height=4, out.height="400px", small.mar=TRUE, dpi=300}
+pn <- sapply(10:400, function(N) phyper(k-1, m, N-m, n, lower.tail=FALSE))
+plot(10:400, pn, type="l", xlab="N", ylab="Pr(X>=k)", las=1, lwd=2, cex.axis=1.2, cex.lab=1.5)
+abline(h=0.05, lty=3, lwd=2, col="red")
+```
+
+---
+
+class: small-code
+
+# La prueba exacta de Fisher
+
+.pull-left[
+* La función de R `fisher.test()` nos permite hacer la prueba exacta unilateral de Fisher de la
+siguiente manera.
+
+* Consideramos la organización previa de la tabla de contingencia de genes DE y de pertenecia a
+un conjunto de genes:
+
+.small-table[
+
+GENES               | DE    | no-DE     | Total  
+--------------------|-------|-----------|------
+DENTRO DEL CONJUNTO |  $k$  | $m-k$     | $m$
+FUERA DEL CONJUNTO  | $n-k$ | $N+k-n-m$ | $N-m$
+TOTAL               | $n$   | $N-n$     | $N$
+
+]
+
+* Para llevar a cabo la prueba exacta de Fisher de forma **unilateral**, debemos utilizar el
+parámetro `alternative="greater"`.
+]
+
+.pull-right[
+```{r, tidy=FALSE}
+N <- 10
+dnames <- list(CG=c("dentro","fuera"),
+               DE=c("sí","no"))
+t <- matrix(c(k, n-k, m-k, N+k-n-m),
+            nrow=2, ncol=2, dimnames=dnames)
+t
+fisher.test(t, alternative="greater")
+```
+]
+
+---
+
+# El análisis de _Gene Ontology_
+
+* Un _análisis de Gene Ontology (GO)_ es un análisis de enriquecimiento funcional
+aplicado a cada uno de los conjuntos de genes de la
+[base de datos de GO](http://geneontology.org).
+
+* La [base de datos de GO](http://geneontology.org) proporciona un vocabulario
+controlado para describir atributos de genes y sus productos para cualquier organismo.
+Consiste de los llamados **términos GO**, los cuales are pares de identificador de
+término (GO ID) y su descripción.
+
+|     GO ID | Descripción           |
+|-----------|-----------------------|
+|GO:0045087 | innate immune response|
+|GO:0006955 | immune response       |
+|GO:0006950 | response to stress    |
+
+* Un término GO pertenece a una de las siguientes tres ontologías: _Biological Process (BP)_,
+_Molecular Function (MF)_ y _Cellular Component (CC)_.
+
+* El producto de un gen puede asociarse con o localizarse en uno o más **componentes celulares**
+y estar activo en uno o más **procesos biológicos** durante los cuales realiza una o más
+**funciones moleculares**.
+
+---
+
+# El análisis de _Gene Ontology_
+
+.pull-left[
+
+* Dentro de una ontología, los términos GO estan relacionados unos con otros a través de relaciones
+jerárquicas que describen cuándo un término GO es más general que otro más específico.
+
+* Detalles en este u otros aspectos están descritos en
+[http://geneontology.org/docs/ontology-documentation](http://geneontology.org/docs/ontology-documentation)
+
+* Para poder llevar a cabo un análisis de GO necesitamos anotaciones sobre los genes que nos
+digan a qué términos GO están asociados.
+
+]
+
+.pull-right[
+<img width="100%" src="img/GOinnateimmuneresponse.png"/>
+]
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* El paquete de Bioconductor [org.Hs.eg.db](https://bioconductor.org/packages/org.Hs.eg.db) contiene
+anotaciones diversas para los genes humanos, incluyendo anotaciones de términos GO.
+
+```{r}
+library(org.Hs.eg.db)
+allHumanGO <- select(org.Hs.eg.db, columns="GO", key=keys(org.Hs.eg.db, keytype="SYMBOL"),
+                     keytype="SYMBOL")
+dim(allHumanGO)
+head(allHumanGO, n=3)
+```
+
+* Las anotaciones de términos GO sobre los genes incluyen la trazabilidad del origen de la
+anotación mediante los [códigos de evidencia](http://geneontology.org/docs/guide-go-evidence-codes).
+
+```{r}
+sort(table(allHumanGO$EVIDENCE), decreasing=TRUE)
+```
+
+---
+
+class: small-code
+
+# Session information
+
+```{r}
+sessionInfo()
+```
