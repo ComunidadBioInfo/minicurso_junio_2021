@@ -12,3 +12,17 @@ Nos acompañan:
 - [M.C. Erick Cuevas Fernández](https://twitter.com/ErickCuevasF)
 
 Para descargar este material da click en el botón **Code** y selecciona la opción **Download zip**. Si lo prefieres, puedes clonar el repositorio en tu computadora usando git clone desde tu terminal.
+
+El fichero `diapostivas_efcg.html` contiene las diapostivas del curso, pero es necesario descargar todos los ficheros del repositorio para poderlas visualizar correctamente.
+
+Para poder utilizar los métodos impartidos en este mini curso, es necesario tener
+una instalación reciente (del último año o dos) de [R](https://www.r-project.org)
+con los siguientes paquetes de [CRAN](https://cran.r-project-org):
+
+- [knitr](https://cran.r-project.org/package=knitr)
+- [kableExtra](https://cran.r-project.org/package=kableExtra)
+
+y [Bioconductor](https://bioconductor.org):
+
+- [org.Hs.eg.db](https://bioconductor.org/packages/org.Hs.eg.db)
+- [GOstats](https://bioconductor.org/packages/GOstats)

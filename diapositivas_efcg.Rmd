@@ -7,9 +7,9 @@
       seal: false
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, cache=FALSE}
 options(htmltools.dir.version = FALSE, width=80)
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, comment.char="")
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, cache=TRUE)
 
 ## from http://yihui.name/knitr/hooks#chunk_hooks
 knitr::knit_hooks$set(small.mar=function(before, options, envir) {
@@ -198,7 +198,7 @@ class: small-code
 * Recordemos la fórmula de la probabilidad de observar $k$ **o mas** genes DE en un conjunto de genes bajo
 la hipótesis nula:
 
-$$ \textrm{Pr}(X >= k)=\sum_{x=k}^{\textrm{min}\{m, n\}} \frac{ {m\choose x} {N-m\choose n-x} }{ {N\choose n} }\,. $$
+$$ \textrm{Pr}(X >= k)=\sum_{x=k}^{\textrm{min}(m, n)} \frac{ {m\choose x} {N-m\choose n-x} }{ {N\choose n} }\,. $$
 
 * Consideremos un ejemplo de juguete donde tenemos unos datos de expresión génica para $N=10$ genes,
 de los cuales $m=4$ pertenecen a un conjunto de genes de nuestro interés y donde identificamos $n=2$
@@ -294,6 +294,56 @@ fisher.test(t, alternative="greater")
 
 ---
 
+class: small-code
+
+# La prueba exacta de Fisher
+
+<!--
+<img style="margin-top:0%" src="img/TLRs.jpg" width="100%"/><br>
+<img style="margin-top:0%" src="img/CostaCastelo16fig1a.png" width="100%"/>
+-->
+
+* Ejemplo con el [fichero de resultados](dat/ttFIRinELGANsUCtissue.rds) del
+análisis de expresión diferencial de
+[Costa and Castelo (2016)](https://dx.doi.org/10.1038/pr.2015.233).
+
+```{r}
+tt <- readRDS(file.path("dat", "ttFIRinELGANsUCtissue.rds"))
+dim(tt)
+head(tt, n=3)
+```
+
+* Identificamos genes DE (FDR < 1%, mínimo 50% de cambio) y formamos el conjunto de genes TLR.
+
+```{r}
+genesDE <- tt$Symbol[tt$adj.P.Val < 0.01 & abs(tt$logFC) > log2(1.5)]
+length(genesDE)
+head(genesDE)
+TLRs <- tt$Symbol[grep("TLR", tt$Symbol)]
+TLRs
+```
+
+---
+
+class: small-code
+
+# La prueba exacta de Fisher
+
+* Construimos la tabla de contingencia y hacemos la prueba exacta de Fisher.
+
+```{r}
+m <- length(TLRs)
+N <- nrow(tt)
+n <- length(genesDE)
+k <- length(intersect(genesDE, TLRs))
+t <- matrix(c(k, n-k, m-k, N+k-n-m),
+            nrow=2, ncol=2, dimnames=dnames)
+t
+fisher.test(t, alternative="greater")
+```
+
+---
+
 # El análisis de _Gene Ontology_
 
 * Un _análisis de Gene Ontology (GO)_ es un análisis de enriquecimiento funcional
@@ -350,7 +400,7 @@ anotaciones diversas para los genes humanos, incluyendo anotaciones de términos
 
 ```{r}
 library(org.Hs.eg.db)
-allHumanGO <- select(org.Hs.eg.db, columns="GO", key=keys(org.Hs.eg.db, keytype="SYMBOL"),
+allHumanGO <- select(org.Hs.eg.db, columns="GO", keys=keys(org.Hs.eg.db, keytype="SYMBOL"),
                      keytype="SYMBOL")
 dim(allHumanGO)
 head(allHumanGO, n=3)
@@ -362,6 +412,266 @@ anotación mediante los [códigos de evidencia](http://geneontology.org/docs/gui
 ```{r}
 sort(table(allHumanGO$EVIDENCE), decreasing=TRUE)
 ```
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Contrastamos si el término GO _innate immune response_ (GO:0045087)
+está enriquecido con los genes DE de
+[Costa and Castelo (2016)](https://dx.doi.org/10.1038/pr.2015.233).
+
+```{r}
+genesIIR <- allHumanGO$SYMBOL[allHumanGO$GO %in% "GO:0045087"]
+m <- length(intersect(genesIIR, tt$Symbol)) ## incluir sólo genes analizados en el conjunto
+k <- length(intersect(genesDE, genesIIR))
+t <- matrix(c(k, n-k, m-k, N+k-n-m),
+            nrow=2, ncol=2, dimnames=dnames)
+t
+fisher.test(t, alternative="greater")
+```
+
+---
+
+# El análisis de _Gene Ontology_
+
+* Hay miles de conjuntos de genes definidos por los términos GO.
+
+```{r}
+length(unique(allHumanGO$GO))
+```
+
+* Existen múltiples paquetes de R disponibles en
+[CRAN](https://cran.r-project.org) y [Bioconductor](https://bioconductor.org)
+que permiten llevar a cabo un análisis de enriquecimiento funcional automáticamente
+para todos los términos GO.
+
+* Aquí ilustraremos este tipo de análisis con el paquete
+[GOstats](https://bioconductor.org/packages/GOstats).
+
+```{r}
+library(GOstats)
+```
+
+* Con
+[GOstats](https://bioconductor.org/packages/GOstats)
+el análisis consiste de los siguientes tres pasos:
+
+  1. Construir un **objeto** de parámetros que especifican información como cuál es
+  el universo de los genes, que genes consideramos DE, etc.
+  2. Ejecutar el análisis de enriquecimiento funcional.
+  3. Almacenar y visualizar los resultados.
+  
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Construimos un objeto de parámetros utilizando identificadores
+[Entrez Gene](https://doi.org/10.1093/nar/gkl993) para los genes:
+
+```{r}
+universoEntrez <- rownames(tt)
+genesDEentrez <- rownames(tt)[tt$adj.P.Val < 0.01 & abs(tt$logFC) > log2(1.5)]
+params <- new("GOHyperGParams", geneIds=genesDEentrez, universeGeneIds=universoEntrez,
+              annotation="org.Hs.eg.db", ontology="BP", pvalueCutoff=0.01)
+```
+
+* Ejecutamos el análisis de enriquecimiento funcional (dura unos minutos).
+
+```{r}
+hgOver <- hyperGTest(params)
+hgOver
+```
+
+* Almacenamos y visualizamos los [resultados](analisisGO.html).
+
+```{r}
+htmlReport(hgOver, file="analisisGO.html")
+```
+```{r, eval=FALSE}
+browseURL("analisisGO.html")
+```
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* El objeto retornado por `hyperGTest()` pertenece la clase
+`GOHyperGResult`. La página de ayuda de `HyperGResult-accessors`
+contiene información sobre qué métodos se pueden utilizar para
+explorar los resultados programáticamente.
+
+```{r, eval=FALSE}
+help("HyperGResult-accessors")
+```
+
+* Un método muy útil es `summary()` ya que nos proporciona un objeto
+`data.frame` con los resultados de la prueba exacta de Fisher para cada
+término GO que cumple el umbral del $p$-valor especificado en el objeto
+de parámetros.
+
+```{r}
+resHgOver <- summary(hgOver)
+dim(resHgOver)
+head(resHgOver, n=3)
+```
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Otros métodos de acceso a los resultados son.
+
+```{r}
+head(geneCounts(hgOver))
+head(universeCounts(hgOver))
+head(pvalues(hgOver))
+length(pvalues(hgOver))
+```
+
+* Estos métodos proporcionan los resultados de las pruebas realizadas
+**todos** los términos GO, y no solamente a los que tienen un $p$-valor
+debajo del umbral utilizado.
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+.pull-left[
+
+* La jerarquía de términos GO y sus solapamientos hacen que las pruebas
+de hipótesis sean muy dependientes entre ellas.
+
+* Si un término está enriquecido significativamente, es probable que el
+término inmediamente superior también lo esté, y sin embargo el término
+más específico siempre será más relevante.
+
+* Una solución consiste en analizar de los términos más específicos a los
+más generales, eliminando los genes que enriquecen un término significativo,
+del término inmediatamente más general en la jerarquía
+([Alexa et al., 2006](https://doi.org/10.1093/bioinformatics/btl140)).
+
+]
+
+.pull-right[
+<img width="100%" src="img/GOinnateimmuneresponse.png"/>
+]
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* En el paquete
+[GOstats](https://bioconductor.org/packages/GOstats)
+esta estrategia se puede utilizar configurando el argumento
+`conditional=TRUE` en el objeto de parámetros.
+
+```{r}
+conditional(params) <- TRUE
+```
+
+* Luego procedimos exactamente igual que hicimos antes.
+
+```{r}
+hgOverCond <- hyperGTest(params)
+hgOverCond
+htmlReport(hgOverCond, file="analisisGOcondicional.html")
+```
+
+* En esta nueva [tabla de resultados](analisisGOcondicional.html),
+el número de términos GO significativos es menor que cuando utilizamos
+la prueba _incondicional_ (`conditional=FALSE`).
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Los términos GO anotados en pocos genes (e.g., $m < 3$) o enriquecidos
+también por pocos genes (e.g., $k < 3$) son menos fiables que los que
+involucran más genes. Por otro lado, los términos GO anotados a muchos
+genes (e.g., $m > 300$) pueden ser demasiado generales para resultar
+útiles.
+
+* Para intentar identificar los términos GO enriquecidos más interesantes
+y fiables podemos filtrar los resultados de la siguiente forma.
+
+```{r}
+resGO <- summary(hgOverCond)
+resGO <- resGO[resGO$Size >= 5 & resGO$Size <= 300 & resGO$Count >= 5, ]
+resGO <- resGO[order(resGO$OddsRatio, decreasing=TRUE), ]
+head(resGO)
+```
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Mediante el método `geneIdsByCategory()` podemos extraer los genes que
+_enriquecen_ cada término GO y pegarlos al resultado de la siguiente manera.
+
+```{r}
+idGenes <- geneIdsByCategory(hgOverCond)[resGO$GOBPID]
+simGenes <- sapply(idGenes, function(ids) tt[ids, "Symbol"])
+simGenes <- sapply(simGenes, paste, collapse=", ")
+resGO <- cbind(resGO, Genes=simGenes)
+rownames(resGO) <- 1:nrow(resGO)
+```
+
+* Podemos generar una tabla de resultados con toda esta información mediante
+la funcion `kable` del paquete
+[knitr](https://cran.r-project.org/package=knitr) y las funciones
+`kable_styling()` y `save_kable()` del paquete
+[kableExtra](https://cran.r-project.org/package=kableExtra).
+
+```{r}
+library(knitr)
+library(kableExtra)
+
+ktab <- kable(resGO, "html", caption="Resultados análisis GO.", row.names=TRUE)
+ktab <- kable_styling(ktab, bootstrap_options=c("stripped", "hover", "responsive"),
+                      fixed_thead=TRUE)
+save_kable(ktab, file="analisisGOfiltrado.html", self_contained=TRUE)
+```
+
+* La tabla de resultados se puede ver a través de este
+[enlace](analisisGOfiltrado.html).
+
+---
+
+# Observaciones finales
+
+* Un análisis de enriquecimiento funcional es una manera fácil de
+abordar la cuestión de qué vías biológicas pueden estar DE.
+
+* Este tipo de técnicas están limitadas por la cantidad de genes DE
+que podemos obtener de nuestros datos.
+
+* El número total de genes involucrados en los cálculos
+(el _universo de los genes_) tiene influencia en el $p$-valor de la
+prueba exacta de Fisher.
+
+* Cuando hacemos un análisis de GO puede ser importante hacerlo teniendo en
+cuenta la estructura jerárquica de la ontología de GO.
+
+* Las bases de datos de conjuntos de genes no siempre pueden contener
+aquellos conjuntos más relevantes a la biología del sistema que estamos
+estudiando.
 
 ---
 

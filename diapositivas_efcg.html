@@ -196,7 +196,7 @@ class: small-code
 * Recordemos la fórmula de la probabilidad de observar `\(k\)` **o mas** genes DE en un conjunto de genes bajo
 la hipótesis nula:
 
-$$ \textrm{Pr}(X &gt;= k)=\sum_{x=k}^{\textrm{min}\{m, n\}} \frac{ {m\choose x} {N-m\choose n-x} }{ {N\choose n} }\,. $$
+$$ \textrm{Pr}(X &gt;= k)=\sum_{x=k}^{\textrm{min}(m, n)} \frac{ {m\choose x} {N-m\choose n-x} }{ {N\choose n} }\,. $$
 
 * Consideremos un ejemplo de juguete donde tenemos unos datos de expresión génica para `\(N=10\)` genes,
 de los cuales `\(m=4\)` pertenecen a un conjunto de genes de nuestro interés y donde identificamos `\(n=2\)`
@@ -349,6 +349,116 @@ fisher.test(t, alternative="greater")
 
 ---
 
+class: small-code
+
+# La prueba exacta de Fisher
+
+&lt;!--
+&lt;img style="margin-top:0%" src="img/TLRs.jpg" width="100%"/&gt;&lt;br&gt;
+&lt;img style="margin-top:0%" src="img/CostaCastelo16fig1a.png" width="100%"/&gt;
+--&gt;
+
+* Ejemplo con el [fichero de resultados](dat/ttFIRinELGANsUCtissue.rds) del
+análisis de expresión diferencial de
+[Costa and Castelo (2016)](https://dx.doi.org/10.1038/pr.2015.233).
+
+
+```r
+tt &lt;- readRDS(file.path("dat", "ttFIRinELGANsUCtissue.rds"))
+dim(tt)
+```
+
+```
+## [1] 20155     7
+```
+
+```r
+head(tt, n=3)
+```
+
+```
+##       Symbol    logFC  AveExpr        t      P.Value    adj.P.Val        B
+## 6347    CCL2 3.727625 8.205631 14.23615 1.511172e-16 3.045768e-12 27.32118
+## 7357    UGCG 1.700702 8.510050 13.39688 9.946626e-16 1.002371e-11 25.54257
+## 10135  NAMPT 2.933293 9.458513 12.18658 1.737891e-14 1.089489e-10 22.81971
+```
+
+* Identificamos genes DE (FDR &lt; 1%, mínimo 50% de cambio) y formamos el conjunto de genes TLR.
+
+
+```r
+genesDE &lt;- tt$Symbol[tt$adj.P.Val &lt; 0.01 &amp; abs(tt$logFC) &gt; log2(1.5)]
+length(genesDE)
+```
+
+```
+## [1] 1088
+```
+
+```r
+head(genesDE)
+```
+
+```
+## [1] "CCL2"   "UGCG"   "NAMPT"  "CNTN1"  "S100A9" "FGF13"
+```
+
+```r
+TLRs &lt;- tt$Symbol[grep("TLR", tt$Symbol)]
+TLRs
+```
+
+```
+##  [1] "TLR8"     "TLR5"     "TLR2"     "TLR4"     "TLR1"     "TLR6"    
+##  [7] "TLR7"     "TLR3"     "TLR10"    "TLR9"     "TLR8-AS1"
+```
+
+---
+
+class: small-code
+
+# La prueba exacta de Fisher
+
+* Construimos la tabla de contingencia y hacemos la prueba exacta de Fisher.
+
+
+```r
+m &lt;- length(TLRs)
+N &lt;- nrow(tt)
+n &lt;- length(genesDE)
+k &lt;- length(intersect(genesDE, TLRs))
+t &lt;- matrix(c(k, n-k, m-k, N+k-n-m),
+            nrow=2, ncol=2, dimnames=dnames)
+t
+```
+
+```
+##         DE
+## CG         sí    no
+##   dentro    2     9
+##   fuera  1086 19058
+```
+
+```r
+fisher.test(t, alternative="greater")
+```
+
+```
+## 
+## 	Fisher's Exact Test for Count Data
+## 
+## data:  t
+## p-value = 0.1159
+## alternative hypothesis: true odds ratio is greater than 1
+## 95 percent confidence interval:
+##  0.6041142       Inf
+## sample estimates:
+## odds ratio 
+##   3.899655
+```
+
+---
+
 # El análisis de _Gene Ontology_
 
 * Un _análisis de Gene Ontology (GO)_ es un análisis de enriquecimiento funcional
@@ -406,7 +516,7 @@ anotaciones diversas para los genes humanos, incluyendo anotaciones de términos
 
 ```r
 library(org.Hs.eg.db)
-allHumanGO &lt;- select(org.Hs.eg.db, columns="GO", key=keys(org.Hs.eg.db, keytype="SYMBOL"),
+allHumanGO &lt;- select(org.Hs.eg.db, columns="GO", keys=keys(org.Hs.eg.db, keytype="SYMBOL"),
                      keytype="SYMBOL")
 dim(allHumanGO)
 ```
@@ -446,6 +556,391 @@ sort(table(allHumanGO$EVIDENCE), decreasing=TRUE)
 
 class: small-code
 
+# El análisis de _Gene Ontology_
+
+* Contrastamos si el término GO _innate immune response_ (GO:0045087)
+está enriquecido con los genes DE de
+[Costa and Castelo (2016)](https://dx.doi.org/10.1038/pr.2015.233).
+
+
+```r
+genesIIR &lt;- allHumanGO$SYMBOL[allHumanGO$GO %in% "GO:0045087"]
+m &lt;- length(intersect(genesIIR, tt$Symbol)) ## incluir sólo genes analizados en el conjunto
+k &lt;- length(intersect(genesDE, genesIIR))
+t &lt;- matrix(c(k, n-k, m-k, N+k-n-m),
+            nrow=2, ncol=2, dimnames=dnames)
+t
+```
+
+```
+##         DE
+## CG         sí    no
+##   dentro   59   350
+##   fuera  1029 18717
+```
+
+```r
+fisher.test(t, alternative="greater")
+```
+
+```
+## 
+## 	Fisher's Exact Test for Count Data
+## 
+## data:  t
+## p-value = 4.872e-12
+## alternative hypothesis: true odds ratio is greater than 1
+## 95 percent confidence interval:
+##  2.382152      Inf
+## sample estimates:
+## odds ratio 
+##   3.065943
+```
+
+---
+
+# El análisis de _Gene Ontology_
+
+* Hay miles de conjuntos de genes definidos por los términos GO.
+
+
+```r
+length(unique(allHumanGO$GO))
+```
+
+```
+## [1] 18349
+```
+
+* Existen múltiples paquetes de R disponibles en
+[CRAN](https://cran.r-project.org) y [Bioconductor](https://bioconductor.org)
+que permiten llevar a cabo un análisis de enriquecimiento funcional automáticamente
+para todos los términos GO.
+
+* Aquí ilustraremos este tipo de análisis con el paquete
+[GOstats](https://bioconductor.org/packages/GOstats).
+
+
+```r
+library(GOstats)
+```
+
+* Con
+[GOstats](https://bioconductor.org/packages/GOstats)
+el análisis consiste de los siguientes tres pasos:
+
+  1. Construir un **objeto** de parámetros que especifican información como cuál es
+  el universo de los genes, que genes consideramos DE, etc.
+  2. Ejecutar el análisis de enriquecimiento funcional.
+  3. Almacenar y visualizar los resultados.
+  
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Construimos un objeto de parámetros utilizando identificadores
+[Entrez Gene](https://doi.org/10.1093/nar/gkl993) para los genes:
+
+
+```r
+universoEntrez &lt;- rownames(tt)
+genesDEentrez &lt;- rownames(tt)[tt$adj.P.Val &lt; 0.01 &amp; abs(tt$logFC) &gt; log2(1.5)]
+params &lt;- new("GOHyperGParams", geneIds=genesDEentrez, universeGeneIds=universoEntrez,
+              annotation="org.Hs.eg.db", ontology="BP", pvalueCutoff=0.01)
+```
+
+* Ejecutamos el análisis de enriquecimiento funcional (dura unos minutos).
+
+
+```r
+hgOver &lt;- hyperGTest(params)
+hgOver
+```
+
+```
+## Gene to GO BP  test for over-representation 
+## 8183 GO BP ids tested (1394 have p &lt; 0.01)
+## Selected gene set size: 1005 
+##     Gene universe size: 15704 
+##     Annotation package: org.Hs.eg
+```
+
+* Almacenamos y visualizamos los [resultados](analisisGO.html).
+
+
+```r
+htmlReport(hgOver, file="analisisGO.html")
+```
+
+```r
+browseURL("analisisGO.html")
+```
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* El objeto retornado por `hyperGTest()` pertenece la clase
+`GOHyperGResult`. La página de ayuda de `HyperGResult-accessors`
+contiene información sobre qué métodos se pueden utilizar para
+explorar los resultados programáticamente.
+
+
+```r
+help("HyperGResult-accessors")
+```
+
+* Un método muy útil es `summary()` ya que nos proporciona un objeto
+`data.frame` con los resultados de la prueba exacta de Fisher para cada
+término GO que cumple el umbral del `\(p\)`-valor especificado en el objeto
+de parámetros.
+
+
+```r
+resHgOver &lt;- summary(hgOver)
+dim(resHgOver)
+```
+
+```
+## [1] 1394    7
+```
+
+```r
+head(resHgOver, n=3)
+```
+
+```
+##       GOBPID       Pvalue OddsRatio  ExpCount Count Size
+## 1 GO:0002274 1.351230e-40  4.673575  40.44575   140  632
+## 2 GO:0006955 1.076723e-39  2.934465 121.40124   269 1897
+## 3 GO:0001775 7.561907e-39  3.256114  86.77916   216 1356
+##                           Term
+## 1 myeloid leukocyte activation
+## 2              immune response
+## 3              cell activation
+```
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Otros métodos de acceso a los resultados son.
+
+
+```r
+head(geneCounts(hgOver))
+```
+
+```
+## GO:0002274 GO:0006955 GO:0001775 GO:0002376 GO:0006954 GO:0036230 
+##        140        269        216        345        145        117
+```
+
+```r
+head(universeCounts(hgOver))
+```
+
+```
+## GO:0002274 GO:0006955 GO:0001775 GO:0002376 GO:0006954 GO:0036230 
+##        632       1897       1356       2801        705        489
+```
+
+```r
+head(pvalues(hgOver))
+```
+
+```
+##   GO:0002274   GO:0006955   GO:0001775   GO:0002376   GO:0006954   GO:0036230 
+## 1.351230e-40 1.076723e-39 7.561907e-39 9.113641e-39 4.182159e-38 2.710878e-37
+```
+
+```r
+length(pvalues(hgOver))
+```
+
+```
+## [1] 8183
+```
+
+* Estos métodos proporcionan los resultados de las pruebas realizadas
+**todos** los términos GO, y no solamente a los que tienen un `\(p\)`-valor
+debajo del umbral utilizado.
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+.pull-left[
+
+* La jerarquía de términos GO y sus solapamientos hacen que las pruebas
+de hipótesis sean muy dependientes entre ellas.
+
+* Si un término está enriquecido significativamente, es probable que el
+término inmediamente superior también lo esté, y sin embargo el término
+más específico siempre será más relevante.
+
+* Una solución consiste en analizar de los términos más específicos a los
+más generales, eliminando los genes que enriquecen un término significativo,
+del término inmediatamente más general en la jerarquía
+([Alexa et al., 2006](https://doi.org/10.1093/bioinformatics/btl140)).
+
+]
+
+.pull-right[
+&lt;img width="100%" src="img/GOinnateimmuneresponse.png"/&gt;
+]
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* En el paquete
+[GOstats](https://bioconductor.org/packages/GOstats)
+esta estrategia se puede utilizar configurando el argumento
+`conditional=TRUE` en el objeto de parámetros.
+
+
+```r
+conditional(params) &lt;- TRUE
+```
+
+* Luego procedimos exactamente igual que hicimos antes.
+
+
+```r
+hgOverCond &lt;- hyperGTest(params)
+hgOverCond
+```
+
+```
+## Gene to GO BP Conditional test for over-representation 
+## 8183 GO BP ids tested (764 have p &lt; 0.01)
+## Selected gene set size: 1005 
+##     Gene universe size: 15704 
+##     Annotation package: org.Hs.eg
+```
+
+```r
+htmlReport(hgOverCond, file="analisisGOcondicional.html")
+```
+
+* En esta nueva [tabla de resultados](analisisGOcondicional.html),
+el número de términos GO significativos es menor que cuando utilizamos
+la prueba _incondicional_ (`conditional=FALSE`).
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Los términos GO anotados en pocos genes (e.g., `\(m &lt; 3\)`) o enriquecidos
+también por pocos genes (e.g., `\(k &lt; 3\)`) son menos fiables que los que
+involucran más genes. Por otro lado, los términos GO anotados a muchos
+genes (e.g., `\(m &gt; 300\)`) pueden ser demasiado generales para resultar
+útiles.
+
+* Para intentar identificar los términos GO enriquecidos más interesantes
+y fiables podemos filtrar los resultados de la siguiente forma.
+
+
+```r
+resGO &lt;- summary(hgOverCond)
+resGO &lt;- resGO[resGO$Size &gt;= 5 &amp; resGO$Size &lt;= 300 &amp; resGO$Count &gt;= 5, ]
+resGO &lt;- resGO[order(resGO$OddsRatio, decreasing=TRUE), ]
+head(resGO)
+```
+
+```
+##         GOBPID       Pvalue OddsRatio  ExpCount Count Size
+## 81  GO:1902563 1.075580e-07  29.47844 0.7679572     8   12
+## 117 GO:0010273 2.565881e-06  20.61283 0.7679572     7   12
+## 211 GO:0010911 1.077893e-04  18.36875 0.5759679     5    9
+## 212 GO:1903011 1.077893e-04  18.36875 0.5759679     5    9
+## 77  GO:0045730 5.755868e-08  16.47811 1.2108852    10   19
+## 234 GO:0002523 2.017034e-04  14.73521 0.6382979     5   10
+##                                                      Term
+## 81                    regulation of neutrophil activation
+## 117                          detoxification of copper ion
+## 211                      regulation of isomerase activity
+## 212               negative regulation of bone development
+## 77                                      respiratory burst
+## 234 leukocyte migration involved in inflammatory response
+```
+
+---
+
+class: small-code
+
+# El análisis de _Gene Ontology_
+
+* Mediante el método `geneIdsByCategory()` podemos extraer los genes que
+_enriquecen_ cada término GO y pegarlos al resultado de la siguiente manera.
+
+
+```r
+idGenes &lt;- geneIdsByCategory(hgOverCond)[resGO$GOBPID]
+simGenes &lt;- sapply(idGenes, function(ids) tt[ids, "Symbol"])
+simGenes &lt;- sapply(simGenes, paste, collapse=", ")
+resGO &lt;- cbind(resGO, Genes=simGenes)
+rownames(resGO) &lt;- 1:nrow(resGO)
+```
+
+* Podemos generar una tabla de resultados con toda esta información mediante
+la funcion `kable` del paquete
+[knitr](https://cran.r-project.org/package=knitr) y las funciones
+`kable_styling()` y `save_kable()` del paquete
+[kableExtra](https://cran.r-project.org/package=kableExtra).
+
+
+```r
+library(knitr)
+library(kableExtra)
+
+ktab &lt;- kable(resGO, "html", caption="Resultados análisis GO.", row.names=TRUE)
+ktab &lt;- kable_styling(ktab, bootstrap_options=c("stripped", "hover", "responsive"),
+                      fixed_thead=TRUE)
+save_kable(ktab, file="analisisGOfiltrado.html", self_contained=TRUE)
+```
+
+* La tabla de resultados se puede ver a través de este
+[enlace](analisisGOfiltrado.html).
+
+---
+
+# Observaciones finales
+
+* Un análisis de enriquecimiento funcional es una manera fácil de
+abordar la cuestión de qué vías biológicas pueden estar DE.
+
+* Este tipo de técnicas están limitadas por la cantidad de genes DE
+que podemos obtener de nuestros datos.
+
+* El número total de genes involucrados en los cálculos
+(el _universo de los genes_) tiene influencia en el `\(p\)`-valor de la
+prueba exacta de Fisher.
+
+* Cuando hacemos un análisis de GO puede ser importante hacerlo teniendo en
+cuenta la estructura jerárquica de la ontología de GO.
+
+* Las bases de datos de conjuntos de genes no siempre pueden contener
+aquellos conjuntos más relevantes a la biología del sistema que estamos
+estudiando.
+
+---
+
+class: small-code
+
 # Session information
 
 
@@ -470,21 +965,34 @@ sessionInfo()
 ## [8] methods   base     
 ## 
 ## other attached packages:
-## [1] org.Hs.eg.db_3.12.0  AnnotationDbi_1.52.0 IRanges_2.24.1      
-## [4] S4Vectors_0.28.1     Biobase_2.50.0       BiocGenerics_0.36.1 
-## [7] colorout_1.2-2      
+##  [1] kableExtra_1.3.4     knitr_1.33           GOstats_2.56.0      
+##  [4] graph_1.68.0         Category_2.56.0      Matrix_1.3-2        
+##  [7] GO.db_3.12.1         org.Hs.eg.db_3.12.0  AnnotationDbi_1.52.0
+## [10] IRanges_2.24.1       S4Vectors_0.28.1     Biobase_2.50.0      
+## [13] BiocGenerics_0.36.1  colorout_1.2-2      
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.6        bslib_0.2.4       compiler_4.0.3    later_1.2.0      
-##  [5] jquerylib_0.1.3   highr_0.9         tools_4.0.3       digest_0.6.27    
-##  [9] bit_4.0.4         memoise_2.0.0     jsonlite_1.7.2    evaluate_0.14    
-## [13] RSQLite_2.2.7     pkgconfig_2.0.3   rlang_0.4.11      DBI_1.1.1        
-## [17] rstudioapi_0.13   yaml_2.2.1        xfun_0.23         fastmap_1.1.0    
-## [21] stringr_1.4.0     knitr_1.33        vctrs_0.3.8       sass_0.3.1       
-## [25] bit64_4.0.5       R6_2.5.0          rmarkdown_2.8     xaringan_0.21    
-## [29] blob_1.2.1        magrittr_2.0.1    servr_0.22        promises_1.2.0.1 
-## [33] htmltools_0.5.1.1 mime_0.10         httpuv_1.6.1      stringi_1.6.2    
-## [37] cachem_1.0.4
+##  [1] Rcpp_1.0.6             svglite_2.0.0          lattice_0.20-41       
+##  [4] digest_0.6.27          mime_0.10              R6_2.5.0              
+##  [7] RSQLite_2.2.7          evaluate_0.14          httr_1.4.2            
+## [10] xaringan_0.21          highr_0.9              rlang_0.4.11          
+## [13] rstudioapi_0.13        annotate_1.68.0        Rgraphviz_2.34.0      
+## [16] jquerylib_0.1.3        blob_1.2.1             rmarkdown_2.8         
+## [19] splines_4.0.3          webshot_0.5.2          servr_0.22            
+## [22] stringr_1.4.0          munsell_0.5.0          RCurl_1.98-1.3        
+## [25] bit_4.0.4              compiler_4.0.3         httpuv_1.6.1          
+## [28] xfun_0.23              systemfonts_1.0.1      pkgconfig_2.0.3       
+## [31] htmltools_0.5.1.1      codetools_0.2-18       XML_3.99-0.6          
+## [34] viridisLite_0.3.0      AnnotationForge_1.32.0 later_1.2.0           
+## [37] bitops_1.0-7           grid_4.0.3             RBGL_1.66.0           
+## [40] jsonlite_1.7.2         xtable_1.8-4           GSEABase_1.52.1       
+## [43] lifecycle_1.0.0        DBI_1.1.1              magrittr_2.0.1        
+## [46] scales_1.1.1           stringi_1.6.2          cachem_1.0.4          
+## [49] genefilter_1.72.1      promises_1.2.0.1       xml2_1.3.2            
+## [52] bslib_0.2.4            vctrs_0.3.8            tools_4.0.3           
+## [55] bit64_4.0.5            glue_1.4.2             fastmap_1.1.0         
+## [58] survival_3.2-10        yaml_2.2.1             colorspace_2.0-0      
+## [61] rvest_1.0.0            memoise_2.0.0          sass_0.3.1
 ```
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
