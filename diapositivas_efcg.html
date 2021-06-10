@@ -56,11 +56,11 @@ cada vía de **interés**.
 * Consideremos primero restrigir la búsqueda de vías biológicas DE a aquellas que son conocidas.
 
 * Bases de datos como [Reactome](https://www.reactome.org) o [KEGG](https://www.genome.jp/kegg)
-anotan información de la literatura sobre los genes, la proteinas and las reacciones que forman
+anotan información de la literatura sobre los genes, la proteínas y las reacciones que forman
 las vías biológicas.
 
-* Una forma simple pero muy útil de definir vías biológicas es en terminos de **conjuntos de genes**,
-irrespectivamente de las interacciones moleculares que pueda haber entre ellos y/o sus productos.
+* Una forma simple pero muy útil de definir vías biológicas es en términos de **conjuntos de genes**,
+independientemente de las interacciones moleculares que pueda haber entre ellos y/o sus productos.
 
 * Hay muchas bases de datos de conjuntos de genes, siendo las más populares
 [The Gene Ontology (GO) project](http://geneontology.org) y
@@ -74,8 +74,8 @@ o bien utilizar técnicas para inferirlos a partir de los datos.
 
 # Definiciones de vías biológicas
 
-* Por ejemplo, piensen en genes que codifican por proteinas involucradas en la respuesta inmune innata.
-Concretamente, aquellos q detectan patógenos humanos.
+* Por ejemplo, piensen en genes que codifican proteínas involucradas en la respuesta inmune innata.
+Concretamente, aquellos que detectan patógenos humanos.
 
 
 .center2[
@@ -86,7 +86,7 @@ Concretamente, aquellos q detectan patógenos humanos.
 
 ---
 
-# Idea general del enriquecimiento functional
+# Idea general del enriquecimiento funcional
 
 * Teniendo en mente la definición de la vía biológica previa, qué podríamos concluir a partir de la siguiente
 gráfica de tipo volcán?
@@ -99,7 +99,7 @@ gráfica de tipo volcán?
 
 ---
 
-# Idea general del enriquecimiento functional
+# Idea general del enriquecimiento funcional
 
 * Una forma conveniente de encontrar vías biológicas DE, en términos de conjuntos de genes DE, es detectando
 lo que se suele llamar un **enriquecimiento funcional** a través de los siguientes dos pasos:
@@ -201,7 +201,7 @@ $$ \textrm{Pr}(X &gt;= k)=\sum_{x=k}^{\textrm{min}(m, n)} \frac{ {m\choose x} {N
 * Consideremos un ejemplo de juguete donde tenemos unos datos de expresión génica para `\(N=10\)` genes,
 de los cuales `\(m=4\)` pertenecen a un conjunto de genes de nuestro interés y donde identificamos `\(n=2\)`
 genes como DE. Supongamos que entre los `\(n=2\)` genes DE hay `\(k=1\)` que pertenece al conjunto de genes.
-Cuál sería el `\(p\)`-valor que nos dice si este conjunto de genes esta enriquecido significativamente en
+Cuál sería el `\(p\)`-valor que nos dice si este conjunto de genes está enriquecido significativamente en
 genes DE?
 
 
@@ -235,7 +235,7 @@ phyper(k-1, m, N-m, n, lower.tail=FALSE)
 ## [1] 0.6666667
 ```
 
-* Esto nos permite jugar facilmente con las cantidades involucradas en este cálculo, por ejemplo
+* Esto nos permite jugar fácilmente con las cantidades involucradas en este cálculo, por ejemplo
 aumentando el número de genes `\(N\)` en nuestros datos de expresión.
 
 
@@ -467,7 +467,7 @@ aplicado a cada uno de los conjuntos de genes de la
 
 * La [base de datos de GO](http://geneontology.org) proporciona un vocabulario
 controlado para describir atributos de genes y sus productos para cualquier organismo.
-Consiste de los llamados **términos GO**, los cuales are pares de identificador de
+Consiste de los llamados **términos GO**, los cuales son pares de identificador de
 término (GO ID) y su descripción.
 
 |     GO ID | Descripción           |
@@ -489,7 +489,7 @@ y estar activo en uno o más **procesos biológicos** durante los cuales realiza
 
 .pull-left[
 
-* Dentro de una ontología, los términos GO estan relacionados unos con otros a través de relaciones
+* Dentro de una ontología, los términos GO están relacionados unos con otros a través de relaciones
 jerárquicas que describen cuándo un término GO es más general que otro más específico.
 
 * Detalles en este u otros aspectos están descritos en
@@ -522,7 +522,7 @@ dim(allHumanGO)
 ```
 
 ```
-## [1] 379747      4
+## [1] 375694      4
 ```
 
 ```r
@@ -546,10 +546,10 @@ sort(table(allHumanGO$EVIDENCE), decreasing=TRUE)
 
 ```
 ## 
-##   IEA   IDA   IBA   TAS   ISS   IMP   IPI   HDA   NAS    ND   IGI   ISA    IC 
-## 75662 67065 65238 42573 25859 21384 18230  7571  6701  1811  1802  1485  1242 
-##   IEP   ISM   EXP   HMP   RCA   HEP   ISO   IGC 
-##   880   723   299   154   143    70     8     1
+##   IEA   IDA   IBA   TAS   ISS   IMP   IPI   HDA   NAS   IGI    ND   ISA    IC 
+## 70526 68654 63435 42473 26506 21884 18641  7541  6770  1867  1775  1452  1244 
+##   IEP   EXP   HMP   RCA   HEP   ISO   ISM   IGC 
+##   880   297   153   143    70     8     2     1
 ```
 
 ---
@@ -575,8 +575,8 @@ t
 ```
 ##         DE
 ## CG         sí    no
-##   dentro   59   350
-##   fuera  1029 18717
+##   dentro   61   352
+##   fuera  1027 18715
 ```
 
 ```r
@@ -588,13 +588,13 @@ fisher.test(t, alternative="greater")
 ## 	Fisher's Exact Test for Count Data
 ## 
 ## data:  t
-## p-value = 4.872e-12
+## p-value = 7.436e-13
 ## alternative hypothesis: true odds ratio is greater than 1
 ## 95 percent confidence interval:
-##  2.382152      Inf
+##  2.462727      Inf
 ## sample estimates:
 ## odds ratio 
-##   3.065943
+##   3.157651
 ```
 
 ---
@@ -609,7 +609,7 @@ length(unique(allHumanGO$GO))
 ```
 
 ```
-## [1] 18349
+## [1] 18392
 ```
 
 * Existen múltiples paquetes de R disponibles en
@@ -630,7 +630,7 @@ library(GOstats)
 el análisis consiste de los siguientes tres pasos:
 
   1. Construir un **objeto** de parámetros que especifican información como cuál es
-  el universo de los genes, que genes consideramos DE, etc.
+  el universo de los genes, qué genes consideramos DE, etc.
   2. Ejecutar el análisis de enriquecimiento funcional.
   3. Almacenar y visualizar los resultados.
   
@@ -661,9 +661,9 @@ hgOver
 
 ```
 ## Gene to GO BP  test for over-representation 
-## 8183 GO BP ids tested (1394 have p &lt; 0.01)
-## Selected gene set size: 1005 
-##     Gene universe size: 15704 
+## 8069 GO BP ids tested (1338 have p &lt; 0.01)
+## Selected gene set size: 1007 
+##     Gene universe size: 15706 
 ##     Annotation package: org.Hs.eg
 ```
 
@@ -706,7 +706,7 @@ dim(resHgOver)
 ```
 
 ```
-## [1] 1394    7
+## [1] 1338    7
 ```
 
 ```r
@@ -715,12 +715,12 @@ head(resHgOver, n=3)
 
 ```
 ##       GOBPID       Pvalue OddsRatio  ExpCount Count Size
-## 1 GO:0002274 1.351230e-40  4.673575  40.44575   140  632
-## 2 GO:0006955 1.076723e-39  2.934465 121.40124   269 1897
-## 3 GO:0001775 7.561907e-39  3.256114  86.77916   216 1356
+## 1 GO:0006955 9.736341e-43  3.039817 121.81969   276 1900
+## 2 GO:0002274 1.144643e-40  4.682485  40.39284   140  630
+## 3 GO:0001775 6.453102e-39  3.269138  86.04317   215 1342
 ##                           Term
-## 1 myeloid leukocyte activation
-## 2              immune response
+## 1              immune response
+## 2 myeloid leukocyte activation
 ## 3              cell activation
 ```
 
@@ -738,8 +738,8 @@ head(geneCounts(hgOver))
 ```
 
 ```
-## GO:0002274 GO:0006955 GO:0001775 GO:0002376 GO:0006954 GO:0036230 
-##        140        269        216        345        145        117
+## GO:0006955 GO:0002274 GO:0001775 GO:0002376 GO:0036230 GO:0042119 
+##        276        140        215        342        117        116
 ```
 
 ```r
@@ -747,8 +747,8 @@ head(universeCounts(hgOver))
 ```
 
 ```
-## GO:0002274 GO:0006955 GO:0001775 GO:0002376 GO:0006954 GO:0036230 
-##        632       1897       1356       2801        705        489
+## GO:0006955 GO:0002274 GO:0001775 GO:0002376 GO:0036230 GO:0042119 
+##       1900        630       1342       2761        486        481
 ```
 
 ```r
@@ -756,8 +756,8 @@ head(pvalues(hgOver))
 ```
 
 ```
-##   GO:0002274   GO:0006955   GO:0001775   GO:0002376   GO:0006954   GO:0036230 
-## 1.351230e-40 1.076723e-39 7.561907e-39 9.113641e-39 4.182159e-38 2.710878e-37
+##   GO:0006955   GO:0002274   GO:0001775   GO:0002376   GO:0036230   GO:0042119 
+## 9.736341e-43 1.144643e-40 6.453102e-39 1.062898e-38 1.712818e-37 2.991395e-37
 ```
 
 ```r
@@ -765,7 +765,7 @@ length(pvalues(hgOver))
 ```
 
 ```
-## [1] 8183
+## [1] 8069
 ```
 
 * Estos métodos proporcionan los resultados de las pruebas realizadas
@@ -824,9 +824,9 @@ hgOverCond
 
 ```
 ## Gene to GO BP Conditional test for over-representation 
-## 8183 GO BP ids tested (764 have p &lt; 0.01)
-## Selected gene set size: 1005 
-##     Gene universe size: 15704 
+## 8069 GO BP ids tested (745 have p &lt; 0.01)
+## Selected gene set size: 1007 
+##     Gene universe size: 15706 
 ##     Annotation package: org.Hs.eg
 ```
 
@@ -863,19 +863,19 @@ head(resGO)
 
 ```
 ##         GOBPID       Pvalue OddsRatio  ExpCount Count Size
-## 81  GO:1902563 1.075580e-07  29.47844 0.7679572     8   12
-## 117 GO:0010273 2.565881e-06  20.61283 0.7679572     7   12
-## 211 GO:0010911 1.077893e-04  18.36875 0.5759679     5    9
-## 212 GO:1903011 1.077893e-04  18.36875 0.5759679     5    9
-## 77  GO:0045730 5.755868e-08  16.47811 1.2108852    10   19
-## 234 GO:0002523 2.017034e-04  14.73521 0.6382979     5   10
-##                                                      Term
-## 81                    regulation of neutrophil activation
-## 117                          detoxification of copper ion
-## 211                      regulation of isomerase activity
-## 212               negative regulation of bone development
-## 77                                      respiratory burst
-## 234 leukocyte migration involved in inflammatory response
+## 105 GO:0010273 2.598197e-06  20.57160 0.7693875     7   12
+## 59  GO:0045730 2.943982e-08  18.50176 1.1493022    10   18
+## 199 GO:0010911 1.087535e-04  18.33209 0.5770406     5    9
+## 119 GO:0002274 5.116181e-06  16.38870 0.8108681     7   14
+## 46  GO:0010575 2.473519e-09  13.71838 1.7311219    13   27
+## 146 GO:0097501 1.779072e-05  12.85463 0.9617344     7   15
+##                                                                     Term
+## 105                                         detoxification of copper ion
+## 59                                                     respiratory burst
+## 199                                     regulation of isomerase activity
+## 119                                         myeloid leukocyte activation
+## 46  positive regulation of vascular endothelial growth factor production
+## 146                                         stress response to metal ion
 ```
 
 ---
@@ -1016,7 +1016,7 @@ class: small-code
 
 # Métodos GSEA
 
-* Para importar ficheros de texto en formato GMT utilizamos la funcion
+* Para importar ficheros de texto en formato GMT utilizamos la función
 `getGmt()` sobre un fichero de extensión `.gmt` que hayamos bajado previamente
 de MSigDb. Esta función nos retornará un objeto `GeneSetCollection`.
 
@@ -1062,7 +1062,7 @@ class ? GeneSetCollection
 
 # Métodos GSEA
 
-* Una de las ventajas de utilizar una classe de objetos específica para conjuntos
+* Una de las ventajas de utilizar una clase de objetos específica para conjuntos
 de genes es la facilidad para cambiar la nomenclatura de los identificadores de los
 genes, por ejemplo, de _Entrez Gene_ a símbolos
 [HGNC](https://www.genenames.org).
@@ -1076,7 +1076,7 @@ c7sym
 ```
 ## GeneSetCollection
 ##   names: KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP, KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN, ..., GSE18804_SPLEEN_MACROPHAGE_VS_COLON_TUMORAL_MACROPHAGE_DN (4872 total)
-##   unique identifiers: RFLNB, AMPD3, ..., LCE3C (20407 total)
+##   unique identifiers: RFLNB, AMPD3, ..., LCE3C (20408 total)
 ##   types in collection:
 ##     geneIdType: SymbolIdentifier (1 total)
 ##     collectionType: BroadCollection (1 total)
@@ -1129,7 +1129,7 @@ class: small-code
 
 # Métodos GSEA
 
-* Una vez tenemos un ranking the genes por cambios de expresión y una collección
+* Una vez tenemos un ranking the genes por cambios de expresión y una colección
 de conjuntos de genes podemos llevar a cabo nuestro _análisis GSEA_.
 
 * Existen muchos métodos GSEA, la implementación original de
@@ -1142,7 +1142,7 @@ disponible en https://www.gsea-msigdb.org/gsea.
 
 * Para utilizarla debemos llamar a la funcion `fgsea()` con el conjunto de
 genes en un objeto `list` y un vector numérico, típicamente con el estadistico
-`\(t\)`, correspondiente al ranking de genes segun su expresión diferencial.
+`\(t\)`, correspondiente al ranking de genes según su expresión diferencial.
 
 
 ```r
@@ -1169,19 +1169,19 @@ head(fgseares)
 
 ```
 ##                                  pathway         pval         padj   log2err
-## 1:   GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_DN 9.285714e-02 1.404969e-01 0.2820134
-## 2:   GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_UP 2.114689e-04 8.061629e-04 0.5188481
-## 3:    GOLDRATH_NAIVE_VS_EFF_CD8_TCELL_DN 5.372239e-06 3.149645e-05 0.6105269
-## 4:    GOLDRATH_NAIVE_VS_EFF_CD8_TCELL_UP 6.350399e-02 1.016732e-01 0.2878051
-## 5: GOLDRATH_NAIVE_VS_MEMORY_CD8_TCELL_DN 1.454964e-09 1.564809e-08 0.7881868
-## 6: GOLDRATH_NAIVE_VS_MEMORY_CD8_TCELL_UP 2.332869e-02 4.457153e-02 0.3524879
+## 1:   GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_DN 6.048463e-02 9.558258e-02 0.3217759
+## 2:   GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_UP 1.393587e-04 5.435992e-04 0.5188481
+## 3:    GOLDRATH_NAIVE_VS_EFF_CD8_TCELL_DN 1.418428e-05 7.274297e-05 0.5933255
+## 4:    GOLDRATH_NAIVE_VS_EFF_CD8_TCELL_UP 4.996426e-02 8.207211e-02 0.3217759
+## 5: GOLDRATH_NAIVE_VS_MEMORY_CD8_TCELL_DN 6.699955e-10 7.538610e-09 0.8012156
+## 6: GOLDRATH_NAIVE_VS_MEMORY_CD8_TCELL_UP 1.868039e-02 3.583105e-02 0.3524879
 ##           ES      NES size                                leadingEdge
-## 1: 0.2561817 1.200121  189    IL6ST,TNIP1,IL4R,SLC11A2,ITPR2,SELL,...
-## 2: 0.3365420 1.574910  192      S100A8,LYN,XBP1,MT2A,ADAM8,TYROBP,...
-## 3: 0.3689360 1.727224  188     MYO1F,LYN,BCL2A1,PLSCR1,EFHD2,MT2A,...
-## 4: 0.2604265 1.217624  190      IL6ST,AMPD3,IL4R,BCL6,PTPN6,ITPR2,...
-## 5: 0.4370445 2.045230  192 MYO1F,IER3,MAP3K8,BCL2A1,TNFRSF1B,CD44,...
-## 6: 0.2751481 1.284543  191  NFKBIZ,PLAUR,HIF1A,IL6ST,AMPD3,TRIM25,...
+## 1: 0.2561817 1.213666  189    IL6ST,TNIP1,IL4R,SLC11A2,ITPR2,SELL,...
+## 2: 0.3365420 1.596140  192      S100A8,LYN,XBP1,MT2A,ADAM8,TYROBP,...
+## 3: 0.3689360 1.743882  188     MYO1F,LYN,BCL2A1,PLSCR1,EFHD2,MT2A,...
+## 4: 0.2604265 1.234840  190      IL6ST,AMPD3,IL4R,BCL6,PTPN6,ITPR2,...
+## 5: 0.4448640 2.109370  190 MYO1F,IER3,MAP3K8,BCL2A1,TNFRSF1B,CD44,...
+## 6: 0.2751481 1.307017  191  NFKBIZ,PLAUR,HIF1A,IL6ST,AMPD3,TRIM25,...
 ```
 
 
@@ -1201,7 +1201,7 @@ dim(fgsearesFDR1)
 ```
 
 ```
-## [1] 1903    8
+## [1] 1955    8
 ```
 
 ```r
@@ -1211,13 +1211,13 @@ head(fgsearesFDR1[orddec, ], n=3)
 
 ```
 ##                                    pathway  pval         padj log2err        ES
-## 1:   GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN 1e-10 1.306166e-09      NA 0.7948721
-## 2:         GSE45365_NK_CELL_VS_CD11B_DC_DN 1e-10 1.306166e-09      NA 0.7597843
-## 3: GSE22886_NAIVE_CD8_TCELL_VS_MONOCYTE_DN 1e-10 1.306166e-09      NA 0.7445796
+## 1:   GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN 1e-10 1.302674e-09      NA 0.7948721
+## 2:         GSE45365_NK_CELL_VS_CD11B_DC_DN 1e-10 1.302674e-09      NA 0.7600713
+## 3: GSE22886_NAIVE_CD8_TCELL_VS_MONOCYTE_DN 1e-10 1.302674e-09      NA 0.7445796
 ##         NES size                                leadingEdge
-## 1: 3.716417  184 NAMPT,S100A9,BCL3,S100A8,S100A12,CXCL1,...
-## 2: 3.547093  191 S100A9,TNFAIP3,TIMP1,S100A8,CXCL1,PTX3,...
-## 3: 3.484398  192  S100A9,BCL3,S100A8,S100A12,ACSL1,FPR1,...
+## 1: 3.772168  184 NAMPT,S100A9,BCL3,S100A8,S100A12,CXCL1,...
+## 2: 3.603959  190 S100A9,TNFAIP3,TIMP1,S100A8,CXCL1,PTX3,...
+## 3: 3.531366  192  S100A9,BCL3,S100A8,S100A12,ACSL1,FPR1,...
 ```
 
 * El conjunto de genes entre los que enriquecen significativamente el ranking
@@ -1334,7 +1334,7 @@ class: small-code
 
 * Una vez cargado el paquete
 [GSVA](https://bioconductor.org/packages/GSVA), llamaremos a la función
-`gsva()` con los datos de expresión y una colleción de conjuntos de genes,
+`gsva()` con los datos de expresión y una colección de conjuntos de genes,
 de la siguiente manera.
 
 
@@ -1370,15 +1370,15 @@ GSexpr[1:5, 1:6]
 ```
 ##                                        GSM213072   GSM213074   GSM213075
 ## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP  -0.0317458 -0.03163242 -0.21851507
-## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN  -0.3547799 -0.16355694 -0.07470141
-## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_UP -0.1517913 -0.10200647 -0.13949513
-## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_DN -0.2079277 -0.16208933 -0.06607749
+## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN  -0.3526195 -0.16009174 -0.06671368
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_UP -0.1576768 -0.11214300 -0.14758394
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_DN -0.2060782 -0.15998962 -0.05934764
 ## KAECH_NAIVE_VS_MEMORY_CD8_TCELL_UP    -0.1772390  0.01588483 -0.16946417
 ##                                         GSM213076 GSM213078  GSM213080
 ## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP  -0.31413382 0.1310327 0.04574326
-## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN  -0.09994852 0.1717584 0.18773985
-## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_UP -0.17301179 0.1247394 0.16050134
-## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_DN -0.08818285 0.1464140 0.16744478
+## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN  -0.09133786 0.1715075 0.19029476
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_UP -0.17121027 0.1246299 0.15355984
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_DN -0.07804361 0.1461861 0.17008254
 ## KAECH_NAIVE_VS_MEMORY_CD8_TCELL_UP    -0.23660689 0.1751549 0.19014024
 ```
 
@@ -1408,13 +1408,13 @@ head(ttGS, n=3)
 
 ```
 ##                                               logFC      AveExpr        t
-## GSE15733_BM_VS_SPLEEN_MEMORY_CD4_TCELL_UP 0.3561214 -0.002346928 8.622659
-## GSE22886_NAIVE_CD8_TCELL_VS_NEUTROPHIL_DN 0.3955689 -0.007038328 8.307966
-## GSE22886_NAIVE_CD4_TCELL_VS_NEUTROPHIL_DN 0.4177466 -0.012859892 8.105978
+## GSE15733_BM_VS_SPLEEN_MEMORY_CD4_TCELL_UP 0.3522650 -0.002452355 8.587642
+## GSE22886_NAIVE_CD8_TCELL_VS_NEUTROPHIL_DN 0.3955689 -0.007038328 8.308684
+## GSE22886_NAIVE_CD4_TCELL_VS_NEUTROPHIL_DN 0.4177466 -0.012859892 8.106628
 ##                                                P.Value    adj.P.Val        B
-## GSE15733_BM_VS_SPLEEN_MEMORY_CD4_TCELL_UP 5.304609e-11 2.584406e-07 14.87420
-## GSE22886_NAIVE_CD8_TCELL_VS_NEUTROPHIL_DN 1.479466e-10 3.603978e-07 13.90519
-## GSE22886_NAIVE_CD4_TCELL_VS_NEUTROPHIL_DN 2.872499e-10 4.664938e-07 13.27735
+## GSE15733_BM_VS_SPLEEN_MEMORY_CD4_TCELL_UP 5.938653e-11 2.893312e-07 14.76733
+## GSE22886_NAIVE_CD8_TCELL_VS_NEUTROPHIL_DN 1.475002e-10 3.593104e-07 13.90778
+## GSE22886_NAIVE_CD4_TCELL_VS_NEUTROPHIL_DN 2.864531e-10 4.651999e-07 13.27974
 ```
 
 ```r
@@ -1422,7 +1422,7 @@ sum(ttGS$adj.P.Val &lt; 0.01)
 ```
 
 ```
-## [1] 402
+## [1] 396
 ```
 
 ---
@@ -1461,8 +1461,8 @@ escoger el más adecuado para la cuestión que se desea abordar.
 
 * Hemos utilizado métodos de filtrado no-específico para conjuntos de genes
 que únicamente restringen el tamaño de estos conjuntos. Otras estrategias
-que pudiesen eliminar conjuntos de genes irrelevantes para nuestro análsis
-probablemente reducirían falsos positivos y incrementarían la potencia
+que pudiesen eliminar conjuntos de genes irrelevantes para nuestro análisis
+probablemente reducirían falsos positivos e incrementarían la potencia
 estadística.
 
 ---
@@ -1477,84 +1477,82 @@ sessionInfo()
 ```
 
 ```
-## R version 4.0.3 (2020-10-10)
+## R version 4.1.0 (2021-05-18)
 ## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Catalina 10.15.7
+## Running under: macOS Big Sur 10.16
 ## 
 ## Matrix products: default
-## BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.1/Resources/lib/libRlapack.dylib
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
 ## attached base packages:
-## [1] parallel  stats4    stats     graphics  grDevices utils     datasets 
+## [1] stats4    parallel  stats     graphics  grDevices utils     datasets 
 ## [8] methods   base     
 ## 
 ## other attached packages:
-##  [1] limma_3.46.0                GSVA_1.38.2                
-##  [3] SummarizedExperiment_1.20.0 GenomicRanges_1.42.0       
-##  [5] GenomeInfoDb_1.26.7         MatrixGenerics_1.2.1       
-##  [7] matrixStats_0.58.0          fgsea_1.16.0               
-##  [9] GSEABase_1.52.1             annotate_1.68.0            
+##  [1] limma_3.48.0                GSVA_1.40.1                
+##  [3] SummarizedExperiment_1.22.0 GenomicRanges_1.44.0       
+##  [5] GenomeInfoDb_1.28.0         MatrixGenerics_1.4.0       
+##  [7] matrixStats_0.59.0          fgsea_1.18.0               
+##  [9] GSEABase_1.54.0             annotate_1.70.0            
 ## [11] XML_3.99-0.6                kableExtra_1.3.4           
-## [13] knitr_1.33                  GOstats_2.56.0             
-## [15] graph_1.68.0                Category_2.56.0            
-## [17] Matrix_1.3-2                GO.db_3.12.1               
-## [19] org.Hs.eg.db_3.12.0         AnnotationDbi_1.52.0       
-## [21] IRanges_2.24.1              S4Vectors_0.28.1           
-## [23] Biobase_2.50.0              BiocGenerics_0.36.1        
-## [25] colorout_1.2-2             
+## [13] knitr_1.33                  GO.db_3.13.0               
+## [15] GOstats_2.58.0              graph_1.70.0               
+## [17] Category_2.58.0             Matrix_1.3-4               
+## [19] org.Hs.eg.db_3.13.0         AnnotationDbi_1.54.1       
+## [21] IRanges_2.26.0              S4Vectors_0.30.0           
+## [23] Biobase_2.52.0              BiocGenerics_0.38.0        
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] colorspace_2.0-0            ellipsis_0.3.2             
-##  [3] XVector_0.30.0              rstudioapi_0.13            
-##  [5] farver_2.1.0                xaringan_0.21              
-##  [7] bit64_4.0.5                 fansi_0.4.2                
-##  [9] xml2_1.3.2                  codetools_0.2-18           
-## [11] splines_4.0.3               sparseMatrixStats_1.2.1    
-## [13] cachem_1.0.4                jsonlite_1.7.2             
-## [15] servr_0.22                  HDF5Array_1.18.1           
-## [17] compiler_4.0.3              httr_1.4.2                 
-## [19] assertthat_0.2.1            fastmap_1.1.0              
-## [21] BiocSingular_1.6.0          later_1.2.0                
-## [23] htmltools_0.5.1.1           tools_4.0.3                
-## [25] rsvd_1.0.5                  gtable_0.3.0               
-## [27] glue_1.4.2                  GenomeInfoDbData_1.2.4     
-## [29] dplyr_1.0.5                 fastmatch_1.1-0            
-## [31] Rcpp_1.0.6                  jquerylib_0.1.3            
-## [33] rhdf5filters_1.2.1          vctrs_0.3.8                
-## [35] svglite_2.0.0               DelayedMatrixStats_1.12.3  
-## [37] xfun_0.23                   stringr_1.4.0              
-## [39] beachmat_2.6.4              rvest_1.0.0                
-## [41] irlba_2.3.3                 mime_0.10                  
-## [43] lifecycle_1.0.0             zlibbioc_1.36.0            
-## [45] scales_1.1.1                promises_1.2.0.1           
-## [47] RBGL_1.66.0                 rhdf5_2.34.0               
-## [49] SingleCellExperiment_1.12.0 yaml_2.2.1                 
-## [51] memoise_2.0.0               gridExtra_2.3              
-## [53] ggplot2_3.3.3               sass_0.3.1                 
-## [55] stringi_1.6.2               RSQLite_2.2.7              
-## [57] highr_0.9                   genefilter_1.72.1          
-## [59] BiocParallel_1.24.1         rlang_0.4.11               
-## [61] pkgconfig_2.0.3             systemfonts_1.0.1          
-## [63] bitops_1.0-7                evaluate_0.14              
-## [65] lattice_0.20-41             Rhdf5lib_1.12.1            
-## [67] purrr_0.3.4                 labeling_0.4.2             
-## [69] bit_4.0.4                   tidyselect_1.1.0           
-## [71] AnnotationForge_1.32.0      magrittr_2.0.1             
-## [73] R6_2.5.0                    generics_0.1.0             
-## [75] DelayedArray_0.16.3         DBI_1.1.1                  
-## [77] pillar_1.5.1                survival_3.2-10            
-## [79] RCurl_1.98-1.3              tibble_3.1.0               
-## [81] crayon_1.4.1                utf8_1.2.1                 
-## [83] rmarkdown_2.8               grid_4.0.3                 
-## [85] data.table_1.14.0           blob_1.2.1                 
-## [87] Rgraphviz_2.34.0            digest_0.6.27              
-## [89] webshot_0.5.2               xtable_1.8-4               
-## [91] httpuv_1.6.1                munsell_0.5.0              
-## [93] viridisLite_0.3.0           bslib_0.2.4
+##  [1] colorspace_2.0-1            ellipsis_0.3.2             
+##  [3] XVector_0.32.0              rstudioapi_0.13            
+##  [5] xaringan_0.21               bit64_4.0.5                
+##  [7] fansi_0.5.0                 xml2_1.3.2                 
+##  [9] codetools_0.2-18            splines_4.1.0              
+## [11] sparseMatrixStats_1.4.0     cachem_1.0.5               
+## [13] jsonlite_1.7.2              png_0.1-7                  
+## [15] HDF5Array_1.20.0            compiler_4.1.0             
+## [17] httr_1.4.2                  assertthat_0.2.1           
+## [19] fastmap_1.1.0               BiocSingular_1.8.1         
+## [21] htmltools_0.5.1.1           tools_4.1.0                
+## [23] rsvd_1.0.5                  gtable_0.3.0               
+## [25] glue_1.4.2                  GenomeInfoDbData_1.2.6     
+## [27] dplyr_1.0.6                 fastmatch_1.1-0            
+## [29] Rcpp_1.0.6                  jquerylib_0.1.4            
+## [31] vctrs_0.3.8                 Biostrings_2.60.1          
+## [33] rhdf5filters_1.4.0          svglite_2.0.0              
+## [35] DelayedMatrixStats_1.14.0   xfun_0.23                  
+## [37] stringr_1.4.0               beachmat_2.8.0             
+## [39] rvest_1.0.0                 lifecycle_1.0.0            
+## [41] irlba_2.3.3                 zlibbioc_1.38.0            
+## [43] scales_1.1.1                RBGL_1.68.0                
+## [45] rhdf5_2.36.0                SingleCellExperiment_1.14.1
+## [47] yaml_2.2.1                  memoise_2.0.0              
+## [49] gridExtra_2.3               ggplot2_3.3.3              
+## [51] sass_0.4.0                  stringi_1.6.2              
+## [53] RSQLite_2.2.7               highr_0.9                  
+## [55] genefilter_1.74.0           ScaledMatrix_1.0.0         
+## [57] BiocParallel_1.26.0         rlang_0.4.11               
+## [59] pkgconfig_2.0.3             systemfonts_1.0.2          
+## [61] bitops_1.0-7                evaluate_0.14              
+## [63] lattice_0.20-44             purrr_0.3.4                
+## [65] Rhdf5lib_1.14.1             bit_4.0.4                  
+## [67] tidyselect_1.1.1            AnnotationForge_1.34.0     
+## [69] magrittr_2.0.1              R6_2.5.0                   
+## [71] generics_0.1.0              DelayedArray_0.18.0        
+## [73] DBI_1.1.1                   pillar_1.6.1               
+## [75] survival_3.2-11             KEGGREST_1.32.0            
+## [77] RCurl_1.98-1.3              tibble_3.1.2               
+## [79] crayon_1.4.1                utf8_1.2.1                 
+## [81] rmarkdown_2.8               grid_4.1.0                 
+## [83] data.table_1.14.0           blob_1.2.1                 
+## [85] Rgraphviz_2.36.0            digest_0.6.27              
+## [87] webshot_0.5.2               xtable_1.8-4               
+## [89] munsell_0.5.0               viridisLite_0.4.0          
+## [91] bslib_0.2.5.1
 ```
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>

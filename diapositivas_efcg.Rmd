@@ -58,11 +58,11 @@ cada vía de **interés**.
 * Consideremos primero restrigir la búsqueda de vías biológicas DE a aquellas que son conocidas.
 
 * Bases de datos como [Reactome](https://www.reactome.org) o [KEGG](https://www.genome.jp/kegg)
-anotan información de la literatura sobre los genes, la proteinas and las reacciones que forman
+anotan información de la literatura sobre los genes, la proteínas y las reacciones que forman
 las vías biológicas.
 
-* Una forma simple pero muy útil de definir vías biológicas es en terminos de **conjuntos de genes**,
-irrespectivamente de las interacciones moleculares que pueda haber entre ellos y/o sus productos.
+* Una forma simple pero muy útil de definir vías biológicas es en términos de **conjuntos de genes**,
+independientemente de las interacciones moleculares que pueda haber entre ellos y/o sus productos.
 
 * Hay muchas bases de datos de conjuntos de genes, siendo las más populares
 [The Gene Ontology (GO) project](http://geneontology.org) y
@@ -76,8 +76,8 @@ o bien utilizar técnicas para inferirlos a partir de los datos.
 
 # Definiciones de vías biológicas
 
-* Por ejemplo, piensen en genes que codifican por proteinas involucradas en la respuesta inmune innata.
-Concretamente, aquellos q detectan patógenos humanos.
+* Por ejemplo, piensen en genes que codifican proteínas involucradas en la respuesta inmune innata.
+Concretamente, aquellos que detectan patógenos humanos.
 
 
 .center2[
@@ -88,7 +88,7 @@ Concretamente, aquellos q detectan patógenos humanos.
 
 ---
 
-# Idea general del enriquecimiento functional
+# Idea general del enriquecimiento funcional
 
 * Teniendo en mente la definición de la vía biológica previa, qué podríamos concluir a partir de la siguiente
 gráfica de tipo volcán?
@@ -101,7 +101,7 @@ gráfica de tipo volcán?
 
 ---
 
-# Idea general del enriquecimiento functional
+# Idea general del enriquecimiento funcional
 
 * Una forma conveniente de encontrar vías biológicas DE, en términos de conjuntos de genes DE, es detectando
 lo que se suele llamar un **enriquecimiento funcional** a través de los siguientes dos pasos:
@@ -203,7 +203,7 @@ $$ \textrm{Pr}(X >= k)=\sum_{x=k}^{\textrm{min}(m, n)} \frac{ {m\choose x} {N-m\
 * Consideremos un ejemplo de juguete donde tenemos unos datos de expresión génica para $N=10$ genes,
 de los cuales $m=4$ pertenecen a un conjunto de genes de nuestro interés y donde identificamos $n=2$
 genes como DE. Supongamos que entre los $n=2$ genes DE hay $k=1$ que pertenece al conjunto de genes.
-Cuál sería el $p$-valor que nos dice si este conjunto de genes esta enriquecido significativamente en
+Cuál sería el $p$-valor que nos dice si este conjunto de genes está enriquecido significativamente en
 genes DE?
 
 ```{r}
@@ -227,7 +227,7 @@ calcular la masa de la distribución hipergeométrica de la siguiente forma:
 phyper(k-1, m, N-m, n, lower.tail=FALSE)
 ```
 
-* Esto nos permite jugar facilmente con las cantidades involucradas en este cálculo, por ejemplo
+* Esto nos permite jugar fácilmente con las cantidades involucradas en este cálculo, por ejemplo
 aumentando el número de genes $N$ en nuestros datos de expresión.
 
 ```{r}
@@ -352,7 +352,7 @@ aplicado a cada uno de los conjuntos de genes de la
 
 * La [base de datos de GO](http://geneontology.org) proporciona un vocabulario
 controlado para describir atributos de genes y sus productos para cualquier organismo.
-Consiste de los llamados **términos GO**, los cuales are pares de identificador de
+Consiste de los llamados **términos GO**, los cuales son pares de identificador de
 término (GO ID) y su descripción.
 
 |     GO ID | Descripción           |
@@ -374,7 +374,7 @@ y estar activo en uno o más **procesos biológicos** durante los cuales realiza
 
 .pull-left[
 
-* Dentro de una ontología, los términos GO estan relacionados unos con otros a través de relaciones
+* Dentro de una ontología, los términos GO están relacionados unos con otros a través de relaciones
 jerárquicas que describen cuándo un término GO es más general que otro más específico.
 
 * Detalles en este u otros aspectos están descritos en
@@ -460,7 +460,7 @@ library(GOstats)
 el análisis consiste de los siguientes tres pasos:
 
   1. Construir un **objeto** de parámetros que especifican información como cuál es
-  el universo de los genes, que genes consideramos DE, etc.
+  el universo de los genes, qué genes consideramos DE, etc.
   2. Ejecutar el análisis de enriquecimiento funcional.
   3. Almacenar y visualizar los resultados.
   
@@ -751,7 +751,7 @@ class: small-code
 
 # Métodos GSEA
 
-* Para importar ficheros de texto en formato GMT utilizamos la funcion
+* Para importar ficheros de texto en formato GMT utilizamos la función
 `getGmt()` sobre un fichero de extensión `.gmt` que hayamos bajado previamente
 de MSigDb. Esta función nos retornará un objeto `GeneSetCollection`.
 
@@ -778,7 +778,7 @@ class ? GeneSetCollection
 
 # Métodos GSEA
 
-* Una de las ventajas de utilizar una classe de objetos específica para conjuntos
+* Una de las ventajas de utilizar una clase de objetos específica para conjuntos
 de genes es la facilidad para cambiar la nomenclatura de los identificadores de los
 genes, por ejemplo, de _Entrez Gene_ a símbolos
 [HGNC](https://www.genenames.org).
@@ -807,7 +807,7 @@ class: small-code
 
 # Métodos GSEA
 
-* Una vez tenemos un ranking the genes por cambios de expresión y una collección
+* Una vez tenemos un ranking the genes por cambios de expresión y una colección
 de conjuntos de genes podemos llevar a cabo nuestro _análisis GSEA_.
 
 * Existen muchos métodos GSEA, la implementación original de
@@ -820,7 +820,7 @@ disponible en https://www.gsea-msigdb.org/gsea.
 
 * Para utilizarla debemos llamar a la funcion `fgsea()` con el conjunto de
 genes en un objeto `list` y un vector numérico, típicamente con el estadistico
-$t$, correspondiente al ranking de genes segun su expresión diferencial.
+$t$, correspondiente al ranking de genes según su expresión diferencial.
 
 ```{r}
 library(fgsea)
@@ -949,7 +949,7 @@ class: small-code
 
 * Una vez cargado el paquete
 [GSVA](https://bioconductor.org/packages/GSVA), llamaremos a la función
-`gsva()` con los datos de expresión y una colleción de conjuntos de genes,
+`gsva()` con los datos de expresión y una colección de conjuntos de genes,
 de la siguiente manera.
 
 ```{r}
@@ -1024,8 +1024,8 @@ escoger el más adecuado para la cuestión que se desea abordar.
 
 * Hemos utilizado métodos de filtrado no-específico para conjuntos de genes
 que únicamente restringen el tamaño de estos conjuntos. Otras estrategias
-que pudiesen eliminar conjuntos de genes irrelevantes para nuestro análsis
-probablemente reducirían falsos positivos y incrementarían la potencia
+que pudiesen eliminar conjuntos de genes irrelevantes para nuestro análisis
+probablemente reducirían falsos positivos e incrementarían la potencia
 estadística.
 
 ---
