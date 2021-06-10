@@ -654,10 +654,11 @@ save_kable(ktab, file="analisisGOfiltrado.html", self_contained=TRUE)
 
 ---
 
-# Observaciones finales
+# Observaciones finales sobre enriquecimiento funcional con la prueba exacta de Fisher
 
-* Un análisis de enriquecimiento funcional es una manera fácil de
-abordar la cuestión de qué vías biológicas pueden estar DE.
+* Un análisis de enriquecimiento funcional mediante la prueba exacta
+unilateral de Fisher es una manera fácil de abordar la cuestión de
+qué vías biológicas pueden estar DE.
 
 * Este tipo de técnicas están limitadas por la cantidad de genes DE
 que podemos obtener de nuestros datos.
@@ -666,12 +667,366 @@ que podemos obtener de nuestros datos.
 (el _universo de los genes_) tiene influencia en el $p$-valor de la
 prueba exacta de Fisher.
 
-* Cuando hacemos un análisis de GO puede ser importante hacerlo teniendo en
-cuenta la estructura jerárquica de la ontología de GO.
+* Cuando llevamos a cabo un "análisis de GO" puede ser importante hacerlo
+teniendo en cuenta la estructura jerárquica de la ontología de GO.
 
 * Las bases de datos de conjuntos de genes no siempre pueden contener
 aquellos conjuntos más relevantes a la biología del sistema que estamos
 estudiando.
+
+---
+
+# Métodos GSEA
+
+* Los métodos de enriquecimiento funcional basados en pruebas de
+sobre-representación como la prueba exacta de Fisher, tienen la
+limitación de que necesitan una lista mínimamente grande de genes DE (>= 30).
+
+* Existen contextos biológicos donde la magnitud de los cambios de
+expresión diferencial puede ser pequeña y podemos llegar a identificar
+solamente unos pocos genes DE (e.g., enfermedades complejas, biomarcadores).
+
+* Hipótesis: los cambios moleculares más relevantes, si bien pequeños,
+ocurren de forma coordinada en una misma vía biológica.
+
+* GSEA es el acrónimo de _Gene Set Enrichment Analysis_ acuñado por
+[Subramanian et al. (2005)](https://doi.org/10.1073/pnas.0506580102),
+donde introducen un método para el análisis de enriquecimiento funcional
+que parte de algún tipo de ranking de expresión diferencial, pero no
+necesita un conjunto mínimo de genes DE.
+
+* Desde entonces, han aparecido muchos otros métodos que parten del
+conjunto de datos de expresión o de algún tipo de ranking de expresión
+diferencial. A todos estos métodos se les conoce popularmente como
+_métodos GSEA_.
+
+---
+
+# Métodos GSEA
+
+* La idea detrás del algoritmo de
+[Subramanian et al. (2005)](https://doi.org/10.1073/pnas.0506580102) consiste
+en calcular para cada conjunto de genes una **puntuación de enriquecimiento**,
+o _enrichment score_ (ES) en inglés, como función de la posición de los genes
+del conjunto a lo largo de un ranking de cambios en la expresión génica.
+
+.center2[
+<img style="margin-top:25%" src="img/GSEAfig1.jpg" width="400px"/>
+]
+
+.footnote[Fig. 1. Subramanian et al. Gene set enrichment analysis: a knowledge-based
+approach for interpreting genome-wide expression profiles. <a href="https://doi.org/10.1073/pnas.0506580102"><em>PNAS</em>, 15545-15550, 2005.</a>]
+
+---
+
+# Métodos GSEA
+
+* Una base de datos de conjuntos de genes muy importante es la
+[Molecular Signatures Database (MSigDB)](https://www.gsea-msigdb.org/gsea/msigdb),
+la cual proporciona conjuntos de genes organizados 9 grandes colecciones temáticas.
+
+* MSigDB almacena cada colección de conjuntos de genes en un fichero en
+un formato llamado
+[_gene matrix transposed_ (GMT)](https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GMT:_Gene_Matrix_Transposed_file_format_.28.2A.gmt.29).
+
+   ```
+   NOMBRE_DEL_CONJUNTO1 DESCRIPCION_CONJUNTO1 GEN1 GEN2 GEN3
+   NOMBRE_DEL_CONJUNTO2 DESCRIPCION_CONJUNTO2 GEN4 GEN2 GEN5 GEN6 GEN7
+   NOMBRE_DEL_CONJUNTO3 DESCRIPCION_CONJUNTO3 GEN1 GEN8 GEN9 GEN3
+   ...
+   ```
+
+* El proyecto Bioconductor proporciona una infraestructura para facilitar la
+manipulación de conjuntos de genes mediante el paquete
+[GSEABase](https://bioconductor.org/packages/GSEABase). Este paquete incluye
+la funcionalidad para importar en R ficheros GMT.
+
+```{r}
+library(GSEABase)
+```
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* Para importar ficheros de texto en formato GMT utilizamos la funcion
+`getGmt()` sobre un fichero de extensión `.gmt` que hayamos bajado previamente
+de MSigDb. Esta función nos retornará un objeto `GeneSetCollection`.
+
+```{r, eval=FALSE}
+c7url <- "https://data.broadinstitute.org/gsea-msigdb/msigdb/release/7.4/c7.immunesigdb.v7.4.entrez.gmt"
+download.file(c7url, file.path("dat", "c7.immunesigdb.v7.4.entrez.gmt"))
+```
+```{r}
+c7 <- getGmt(file.path("dat", "c7.immunesigdb.v7.4.entrez.gmt"),
+             geneIdType=EntrezIdentifier("org.Hs.eg.db"),
+             collectionType=BroadCollection(category="c7"))
+c7
+length(c7)
+```
+
+* Podemos obtener información sobre la clase de objetos `GeneSetCollection` en
+su página de ayuda correspondiente:
+
+```{r}
+class ? GeneSetCollection
+```
+
+---
+
+# Métodos GSEA
+
+* Una de las ventajas de utilizar una classe de objetos específica para conjuntos
+de genes es la facilidad para cambiar la nomenclatura de los identificadores de los
+genes, por ejemplo, de _Entrez Gene_ a símbolos
+[HGNC](https://www.genenames.org).
+
+```{r}
+c7sym <- mapIdentifiers(c7, SymbolIdentifier())
+c7sym
+length(c7sym)
+```
+
+
+---
+
+# Métodos GSEA
+
+* Podemos sacar los conjuntos de genes en un objeto `list` con la función `geneIds()`.
+
+```{r}
+c7symlist <- geneIds(c7sym)
+head(lapply(c7symlist, head))
+```
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* Una vez tenemos un ranking the genes por cambios de expresión y una collección
+de conjuntos de genes podemos llevar a cabo nuestro _análisis GSEA_.
+
+* Existen muchos métodos GSEA, la implementación original de
+[Subramanian et al. (2005)](https://doi.org/10.1073/pnas.0506580102) está
+disponible en https://www.gsea-msigdb.org/gsea.
+
+* Una implementación robusta y rápida es la del paquete de Bioconductor
+[fgsea](https://bioconductor.org/packages/fgsea) introducida por
+[Korotkevich et al. (2021)](https://doi.org/10.1101/060012).
+
+* Para utilizarla debemos llamar a la funcion `fgsea()` con el conjunto de
+genes en un objeto `list` y un vector numérico, típicamente con el estadistico
+$t$, correspondiente al ranking de genes segun su expresión diferencial.
+
+```{r}
+library(fgsea)
+
+stats <- tt$t
+names(stats) <- tt$Symbol
+fgseares <- fgsea(c7symlist, stats, minSize=10, maxSize=200)
+```
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* El valor retornado por la función `fgsea()` es un objeto `data.table`
+(una versión sofisticada de un `data.frame`).
+
+```{r, dependson=-1}
+head(fgseares)
+```
+
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* La columna `padj` contiene los $p$-valores corregidos por FDR, los cuales
+podemos utilizar para seleccionar conjuntos de genes DE con, e.g., FDR < 1%.
+
+```{r, dependson=-1}
+fgsearesFDR1 <- fgseares[fgseares$padj < 0.01, ]
+dim(fgsearesFDR1)
+orddec <- order(abs(fgsearesFDR1$ES), decreasing=TRUE)
+head(fgsearesFDR1[orddec, ], n=3)
+```
+
+* El conjunto de genes entre los que enriquecen significativamente el ranking
+(FDR < 1%) con mayor valor absoluto de ES es
+[GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN](https://www.gsea-msigdb.org/gsea/msigdb/cards/GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN).
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* La función `plotEnrichment()` nos permite ver cómo se ha calculado el valor
+de ES para un conjunto de genes concreto.
+
+```{r enrichmentplot, fig.align="center", fig.width=7, fig.height=4, out.height="400px", small.mar=TRUE, dpi=300, dependson=-1}
+plotEnrichment(c7symlist[["GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN"]], stats) +
+               ggplot2::ggtitle("GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN")
+```
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Un tipo muy útil de métodos para el análisis de expresión diferencial a nivel de
+vías biológicas son aquellos que calculan el enriquecimiento funcional sobre
+cada muestra de forma individual, se les conoce como
+_single sample gene set enrichment (ssGSEA) methods_ o
+_gene set variation analysis (GSVA) methods_.
+
+* Estos métodos se basan en una idea conceptualmente muy sencilla pero muy
+potente: transformar la matriz de valores de expresión de genes por muestras a
+otra matriz de valores de expresión de conjuntos-de-genes por muestra.
+
+* Los métodos de este tipo se pueden agrupar por la forma en que realizan la
+transformación:
+
+  * $z$-_scores_ [(Lee et al., 2008)](https://doi.org/10.1371/journal.pcbi.1000217).
+  * _singular value decomposition (SVD)_  [(Tomfohr et al., 2005)](https://doi.org/10.1186/1471-2105-6-225).
+  * _competitive KS random-walks_ [(Barbie et al., 2009)](https://doi.org/10.1038/nature08460) y
+    [(Hänzelmann et al., 2013)](https://doi.org/10.1186/1471-2105-14-7).
+  * _self-contained KS random-walks_ [(Foroutan et al., 2018)](https://doi.org/10.1186/s12859-018-2435-4).
+  
+* Los cuatro primeros están disponibles en el paquete
+[GSVA](https://bioconductor.org/packages/GSVA), mientras que el último
+está disponible en el paquete
+[singscore](https://bioconductor.org/packages/singscore).
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* El método GSVA se puede representar esquemáticamente de la siguiente forma.
+
+<br><br>
+
+
+![](img/GSVAfig1.jpg)
+
+.footnote[Fig. 1. Hänzelmann et al. GSVA: gene set variation analysis for microarray and RNA-seq data. <a href="https://doi.org/10.1186/1471-2105-14-7"><em>BMC Bioinformatics</em>, 14:7, 2013.</a>]
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+Para ilustrar la aplicación del método GSVA, utilizaremos los datos de expresión
+génica de
+[Costa and Castelo (2016)](https://dx.doi.org/10.1038/pr.2015.233), ya normalizados
+y almacenados en un [objeto SummarizedExperiment](dat/seFIRinELGANsUCtissue.rds).
+
+```{r}
+library(SummarizedExperiment)
+se <- readRDS(file.path("dat", "seFIRinELGANsUCtissue.rds"))
+se
+table(se$FIR, se$Sex)
+```
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Una vez cargado el paquete
+[GSVA](https://bioconductor.org/packages/GSVA), llamaremos a la función
+`gsva()` con los datos de expresión y una colleción de conjuntos de genes,
+de la siguiente manera.
+
+```{r}
+library(GSVA)
+```
+```{r, eval=FALSE}
+GSexpr <- gsva(assay(se), c7sym, min.sz=10, max.sz=200)
+```
+```{r, echo=FALSE}
+GSexpr <- gsva(assay(se), c7sym, min.sz=10, max.sz=200, verbose=FALSE)
+```
+```{r}
+class(GSexpr)
+dim(GSexpr)
+GSexpr[1:5, 1:6]
+```
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Ahora podemos utilizar la matriz de valores de _single sample ES_ para,
+por ejemplo, llevar a cabo un análisis de expresión diferencial directamente
+a nivel de vía biológica con el paquete
+[limma](https://bioconductor.org/packages/limma). Nuestro modelo lineal contempla
+la exposición a la respuesta inflamatoria (FIR) como principal variable explicativa
+y el sexo y el indicador de lote como covariables de ajuste.
+
+```{r}
+library(limma)
+
+mod <- model.matrix(~ FIR + Sex + Batch, colData(se))
+fit <- lmFit(GSexpr, mod)
+fit <- eBayes(fit)
+ttGS <- topTable(fit, coef="FIRyes", n=Inf)
+head(ttGS, n=3)
+sum(ttGS$adj.P.Val < 0.01)
+```
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Podemos explorar los resultados como si hubieramos hecho el análisis
+a nivel de gen, pero la magnitud del cambio de expresión no se puede interpretar igual.
+
+```{r volcanoplot, fig.align="center", fig.width=7, fig.height=4, out.height="350px", small.mar=TRUE, dpi=300, dependson=-1}
+par(mfrow=c(1, 2))
+hist(ttGS$P.Value, xlab="P-value", main="")
+volcanoplot(fit, coef="FIRyes")
+```
+
+---
+
+# Observaciones finales sobre enriquecimiento funcional con GSEA y GSVA
+
+* Los métodos GSEA condensan los perfiles de expresión en vías biológicas.
+Nos permiten detectar cambios de expresión pequeños pero consistentes y
+facilitan la interpretabilidad de los resultados.
+
+* La principal ventaja de los métodos GSEA es que no dependen de una lista
+de genes DE y esto es importante cuando la magnitud de los cambios de expresión
+es pequeña en el sistema biológico que estemos estudiando.
+
+* Hay muchos métodos GSEA, los artículos de revisión de
+[Goeman and Buhlmann (2007)](https://doi.org/10.1093/bioinformatics/btm051), [Hung et al. (2012)](https://doi.org/10.1093/bib/bbr049) y [Geistlinger et al. (2020)](https://doi.org/10.1093/bib/bbz158) pueden servir como guía para
+escoger el más adecuado para la cuestión que se desea abordar.
+
+* Hemos utilizado métodos de filtrado no-específico para conjuntos de genes
+que únicamente restringen el tamaño de estos conjuntos. Otras estrategias
+que pudiesen eliminar conjuntos de genes irrelevantes para nuestro análsis
+probablemente reducirían falsos positivos y incrementarían la potencia
+estadística.
 
 ---
 
@@ -681,4 +1036,5 @@ class: small-code
 
 ```{r}
 sessionInfo()
+
 ```

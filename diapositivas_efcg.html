@@ -918,10 +918,11 @@ save_kable(ktab, file="analisisGOfiltrado.html", self_contained=TRUE)
 
 ---
 
-# Observaciones finales
+# Observaciones finales sobre enriquecimiento funcional con la prueba exacta de Fisher
 
-* Un análisis de enriquecimiento funcional es una manera fácil de
-abordar la cuestión de qué vías biológicas pueden estar DE.
+* Un análisis de enriquecimiento funcional mediante la prueba exacta
+unilateral de Fisher es una manera fácil de abordar la cuestión de
+qué vías biológicas pueden estar DE.
 
 * Este tipo de técnicas están limitadas por la cantidad de genes DE
 que podemos obtener de nuestros datos.
@@ -930,12 +931,539 @@ que podemos obtener de nuestros datos.
 (el _universo de los genes_) tiene influencia en el `\(p\)`-valor de la
 prueba exacta de Fisher.
 
-* Cuando hacemos un análisis de GO puede ser importante hacerlo teniendo en
-cuenta la estructura jerárquica de la ontología de GO.
+* Cuando llevamos a cabo un "análisis de GO" puede ser importante hacerlo
+teniendo en cuenta la estructura jerárquica de la ontología de GO.
 
 * Las bases de datos de conjuntos de genes no siempre pueden contener
 aquellos conjuntos más relevantes a la biología del sistema que estamos
 estudiando.
+
+---
+
+# Métodos GSEA
+
+* Los métodos de enriquecimiento funcional basados en pruebas de
+sobre-representación como la prueba exacta de Fisher, tienen la
+limitación de que necesitan una lista mínimamente grande de genes DE (&gt;= 30).
+
+* Existen contextos biológicos donde la magnitud de los cambios de
+expresión diferencial puede ser pequeña y podemos llegar a identificar
+solamente unos pocos genes DE (e.g., enfermedades complejas, biomarcadores).
+
+* Hipótesis: los cambios moleculares más relevantes, si bien pequeños,
+ocurren de forma coordinada en una misma vía biológica.
+
+* GSEA es el acrónimo de _Gene Set Enrichment Analysis_ acuñado por
+[Subramanian et al. (2005)](https://doi.org/10.1073/pnas.0506580102),
+donde introducen un método para el análisis de enriquecimiento funcional
+que parte de algún tipo de ranking de expresión diferencial, pero no
+necesita un conjunto mínimo de genes DE.
+
+* Desde entonces, han aparecido muchos otros métodos que parten del
+conjunto de datos de expresión o de algún tipo de ranking de expresión
+diferencial. A todos estos métodos se les conoce popularmente como
+_métodos GSEA_.
+
+---
+
+# Métodos GSEA
+
+* La idea detrás del algoritmo de
+[Subramanian et al. (2005)](https://doi.org/10.1073/pnas.0506580102) consiste
+en calcular para cada conjunto de genes una **puntuación de enriquecimiento**,
+o _enrichment score_ (ES) en inglés, como función de la posición de los genes
+del conjunto a lo largo de un ranking de cambios en la expresión génica.
+
+.center2[
+&lt;img style="margin-top:25%" src="img/GSEAfig1.jpg" width="400px"/&gt;
+]
+
+.footnote[Fig. 1. Subramanian et al. Gene set enrichment analysis: a knowledge-based
+approach for interpreting genome-wide expression profiles. &lt;a href="https://doi.org/10.1073/pnas.0506580102"&gt;&lt;em&gt;PNAS&lt;/em&gt;, 15545-15550, 2005.&lt;/a&gt;]
+
+---
+
+# Métodos GSEA
+
+* Una base de datos de conjuntos de genes muy importante es la
+[Molecular Signatures Database (MSigDB)](https://www.gsea-msigdb.org/gsea/msigdb),
+la cual proporciona conjuntos de genes organizados 9 grandes colecciones temáticas.
+
+* MSigDB almacena cada colección de conjuntos de genes en un fichero en
+un formato llamado
+[_gene matrix transposed_ (GMT)](https://software.broadinstitute.org/cancer/software/gsea/wiki/index.php/Data_formats#GMT:_Gene_Matrix_Transposed_file_format_.28.2A.gmt.29).
+
+   ```
+   NOMBRE_DEL_CONJUNTO1 DESCRIPCION_CONJUNTO1 GEN1 GEN2 GEN3
+   NOMBRE_DEL_CONJUNTO2 DESCRIPCION_CONJUNTO2 GEN4 GEN2 GEN5 GEN6 GEN7
+   NOMBRE_DEL_CONJUNTO3 DESCRIPCION_CONJUNTO3 GEN1 GEN8 GEN9 GEN3
+   ...
+   ```
+
+* El proyecto Bioconductor proporciona una infraestructura para facilitar la
+manipulación de conjuntos de genes mediante el paquete
+[GSEABase](https://bioconductor.org/packages/GSEABase). Este paquete incluye
+la funcionalidad para importar en R ficheros GMT.
+
+
+```r
+library(GSEABase)
+```
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* Para importar ficheros de texto en formato GMT utilizamos la funcion
+`getGmt()` sobre un fichero de extensión `.gmt` que hayamos bajado previamente
+de MSigDb. Esta función nos retornará un objeto `GeneSetCollection`.
+
+
+```r
+c7url &lt;- "https://data.broadinstitute.org/gsea-msigdb/msigdb/release/7.4/c7.immunesigdb.v7.4.entrez.gmt"
+download.file(c7url, file.path("dat", "c7.immunesigdb.v7.4.entrez.gmt"))
+```
+
+```r
+c7 &lt;- getGmt(file.path("dat", "c7.immunesigdb.v7.4.entrez.gmt"),
+             geneIdType=EntrezIdentifier("org.Hs.eg.db"),
+             collectionType=BroadCollection(category="c7"))
+c7
+```
+
+```
+## GeneSetCollection
+##   names: KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP, KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN, ..., GSE18804_SPLEEN_MACROPHAGE_VS_COLON_TUMORAL_MACROPHAGE_DN (4872 total)
+##   unique identifiers: 359845, 272, ..., 353144 (20408 total)
+##   types in collection:
+##     geneIdType: EntrezIdentifier (1 total)
+##     collectionType: BroadCollection (1 total)
+```
+
+```r
+length(c7)
+```
+
+```
+## [1] 4872
+```
+
+* Podemos obtener información sobre la clase de objetos `GeneSetCollection` en
+su página de ayuda correspondiente:
+
+
+```r
+class ? GeneSetCollection
+```
+
+---
+
+# Métodos GSEA
+
+* Una de las ventajas de utilizar una classe de objetos específica para conjuntos
+de genes es la facilidad para cambiar la nomenclatura de los identificadores de los
+genes, por ejemplo, de _Entrez Gene_ a símbolos
+[HGNC](https://www.genenames.org).
+
+
+```r
+c7sym &lt;- mapIdentifiers(c7, SymbolIdentifier())
+c7sym
+```
+
+```
+## GeneSetCollection
+##   names: KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP, KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN, ..., GSE18804_SPLEEN_MACROPHAGE_VS_COLON_TUMORAL_MACROPHAGE_DN (4872 total)
+##   unique identifiers: RFLNB, AMPD3, ..., LCE3C (20407 total)
+##   types in collection:
+##     geneIdType: SymbolIdentifier (1 total)
+##     collectionType: BroadCollection (1 total)
+```
+
+```r
+length(c7sym)
+```
+
+```
+## [1] 4872
+```
+
+
+---
+
+# Métodos GSEA
+
+* Podemos sacar los conjuntos de genes en un objeto `list` con la función `geneIds()`.
+
+
+```r
+c7symlist &lt;- geneIds(c7sym)
+head(lapply(c7symlist, head))
+```
+
+```
+## $KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP
+## [1] "RFLNB" "AMPD3" "NSG2"  "DUSP6" "ADCY6" "TEC"  
+## 
+## $KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN
+## [1] "HOPX"   "ID2"    "LGALS1" "HASPIN" "NDUFV3" "S100A6"
+## 
+## $KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_UP
+## [1] "EML5"   "KLK8"   "GALK1"  "METTL9" "PRKD2"  "TDRP"  
+## 
+## $KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_DN
+## [1] "BCL2A1" "ID2"    "MAPRE2" "COX17"  "KLRG1"  "ITGAX" 
+## 
+## $KAECH_NAIVE_VS_MEMORY_CD8_TCELL_UP
+## [1] "MFHAS1"  "PRKCB"   "RAMP1"   "RETREG1" "ADCY6"   "CNN3"   
+## 
+## $KAECH_NAIVE_VS_MEMORY_CD8_TCELL_DN
+## [1] "TSPAN31" "CCR5"    "IFNG"    "FASLG"   "NRP1"    "ANXA2"
+```
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* Una vez tenemos un ranking the genes por cambios de expresión y una collección
+de conjuntos de genes podemos llevar a cabo nuestro _análisis GSEA_.
+
+* Existen muchos métodos GSEA, la implementación original de
+[Subramanian et al. (2005)](https://doi.org/10.1073/pnas.0506580102) está
+disponible en https://www.gsea-msigdb.org/gsea.
+
+* Una implementación robusta y rápida es la del paquete de Bioconductor
+[fgsea](https://bioconductor.org/packages/fgsea) introducida por
+[Korotkevich et al. (2021)](https://doi.org/10.1101/060012).
+
+* Para utilizarla debemos llamar a la funcion `fgsea()` con el conjunto de
+genes en un objeto `list` y un vector numérico, típicamente con el estadistico
+`\(t\)`, correspondiente al ranking de genes segun su expresión diferencial.
+
+
+```r
+library(fgsea)
+
+stats &lt;- tt$t
+names(stats) &lt;- tt$Symbol
+fgseares &lt;- fgsea(c7symlist, stats, minSize=10, maxSize=200)
+```
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* El valor retornado por la función `fgsea()` es un objeto `data.table`
+(una versión sofisticada de un `data.frame`).
+
+
+```r
+head(fgseares)
+```
+
+```
+##                                  pathway         pval         padj   log2err
+## 1:   GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_DN 9.285714e-02 1.404969e-01 0.2820134
+## 2:   GOLDRATH_EFF_VS_MEMORY_CD8_TCELL_UP 2.114689e-04 8.061629e-04 0.5188481
+## 3:    GOLDRATH_NAIVE_VS_EFF_CD8_TCELL_DN 5.372239e-06 3.149645e-05 0.6105269
+## 4:    GOLDRATH_NAIVE_VS_EFF_CD8_TCELL_UP 6.350399e-02 1.016732e-01 0.2878051
+## 5: GOLDRATH_NAIVE_VS_MEMORY_CD8_TCELL_DN 1.454964e-09 1.564809e-08 0.7881868
+## 6: GOLDRATH_NAIVE_VS_MEMORY_CD8_TCELL_UP 2.332869e-02 4.457153e-02 0.3524879
+##           ES      NES size                                leadingEdge
+## 1: 0.2561817 1.200121  189    IL6ST,TNIP1,IL4R,SLC11A2,ITPR2,SELL,...
+## 2: 0.3365420 1.574910  192      S100A8,LYN,XBP1,MT2A,ADAM8,TYROBP,...
+## 3: 0.3689360 1.727224  188     MYO1F,LYN,BCL2A1,PLSCR1,EFHD2,MT2A,...
+## 4: 0.2604265 1.217624  190      IL6ST,AMPD3,IL4R,BCL6,PTPN6,ITPR2,...
+## 5: 0.4370445 2.045230  192 MYO1F,IER3,MAP3K8,BCL2A1,TNFRSF1B,CD44,...
+## 6: 0.2751481 1.284543  191  NFKBIZ,PLAUR,HIF1A,IL6ST,AMPD3,TRIM25,...
+```
+
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* La columna `padj` contiene los `\(p\)`-valores corregidos por FDR, los cuales
+podemos utilizar para seleccionar conjuntos de genes DE con, e.g., FDR &lt; 1%.
+
+
+```r
+fgsearesFDR1 &lt;- fgseares[fgseares$padj &lt; 0.01, ]
+dim(fgsearesFDR1)
+```
+
+```
+## [1] 1903    8
+```
+
+```r
+orddec &lt;- order(abs(fgsearesFDR1$ES), decreasing=TRUE)
+head(fgsearesFDR1[orddec, ], n=3)
+```
+
+```
+##                                    pathway  pval         padj log2err        ES
+## 1:   GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN 1e-10 1.306166e-09      NA 0.7948721
+## 2:         GSE45365_NK_CELL_VS_CD11B_DC_DN 1e-10 1.306166e-09      NA 0.7597843
+## 3: GSE22886_NAIVE_CD8_TCELL_VS_MONOCYTE_DN 1e-10 1.306166e-09      NA 0.7445796
+##         NES size                                leadingEdge
+## 1: 3.716417  184 NAMPT,S100A9,BCL3,S100A8,S100A12,CXCL1,...
+## 2: 3.547093  191 S100A9,TNFAIP3,TIMP1,S100A8,CXCL1,PTX3,...
+## 3: 3.484398  192  S100A9,BCL3,S100A8,S100A12,ACSL1,FPR1,...
+```
+
+* El conjunto de genes entre los que enriquecen significativamente el ranking
+(FDR &lt; 1%) con mayor valor absoluto de ES es
+[GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN](https://www.gsea-msigdb.org/gsea/msigdb/cards/GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN).
+
+---
+
+class: small-code
+
+# Métodos GSEA
+
+* La función `plotEnrichment()` nos permite ver cómo se ha calculado el valor
+de ES para un conjunto de genes concreto.
+
+
+```r
+plotEnrichment(c7symlist[["GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN"]], stats) +
+               ggplot2::ggtitle("GSE22886_NAIVE_BCELL_VS_NEUTROPHIL_DN")
+```
+
+&lt;img src="diapositivas_efcg_files/figure-html/enrichmentplot-1.png" height="400px" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Un tipo muy útil de métodos para el análisis de expresión diferencial a nivel de
+vías biológicas son aquellos que calculan el enriquecimiento funcional sobre
+cada muestra de forma individual, se les conoce como
+_single sample gene set enrichment (ssGSEA) methods_ o
+_gene set variation analysis (GSVA) methods_.
+
+* Estos métodos se basan en una idea conceptualmente muy sencilla pero muy
+potente: transformar la matriz de valores de expresión de genes por muestras a
+otra matriz de valores de expresión de conjuntos-de-genes por muestra.
+
+* Los métodos de este tipo se pueden agrupar por la forma en que realizan la
+transformación:
+
+  * `\(z\)`-_scores_ [(Lee et al., 2008)](https://doi.org/10.1371/journal.pcbi.1000217).
+  * _singular value decomposition (SVD)_  [(Tomfohr et al., 2005)](https://doi.org/10.1186/1471-2105-6-225).
+  * _competitive KS random-walks_ [(Barbie et al., 2009)](https://doi.org/10.1038/nature08460) y
+    [(Hänzelmann et al., 2013)](https://doi.org/10.1186/1471-2105-14-7).
+  * _self-contained KS random-walks_ [(Foroutan et al., 2018)](https://doi.org/10.1186/s12859-018-2435-4).
+  
+* Los cuatro primeros están disponibles en el paquete
+[GSVA](https://bioconductor.org/packages/GSVA), mientras que el último
+está disponible en el paquete
+[singscore](https://bioconductor.org/packages/singscore).
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* El método GSVA se puede representar esquemáticamente de la siguiente forma.
+
+&lt;br&gt;&lt;br&gt;
+
+
+![](img/GSVAfig1.jpg)
+
+.footnote[Fig. 1. Hänzelmann et al. GSVA: gene set variation analysis for microarray and RNA-seq data. &lt;a href="https://doi.org/10.1186/1471-2105-14-7"&gt;&lt;em&gt;BMC Bioinformatics&lt;/em&gt;, 14:7, 2013.&lt;/a&gt;]
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+Para ilustrar la aplicación del método GSVA, utilizaremos los datos de expresión
+génica de
+[Costa and Castelo (2016)](https://dx.doi.org/10.1038/pr.2015.233), ya normalizados
+y almacenados en un [objeto SummarizedExperiment](dat/seFIRinELGANsUCtissue.rds).
+
+
+```r
+library(SummarizedExperiment)
+se &lt;- readRDS(file.path("dat", "seFIRinELGANsUCtissue.rds"))
+se
+```
+
+```
+## class: SummarizedExperiment 
+## dim: 20155 43 
+## metadata(0):
+## assays(1): ''
+## rownames(20155): A1BG NAT2 ... CASP8AP2 SCO2
+## rowData names(0):
+## colnames(43): GSM213072 GSM213074 ... GSM213124 GSM213125
+## colData names(3): FIR Sex Batch
+```
+
+```r
+table(se$FIR, se$Sex)
+```
+
+```
+##      
+##       female male
+##   no       8   17
+##   yes      8   10
+```
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Una vez cargado el paquete
+[GSVA](https://bioconductor.org/packages/GSVA), llamaremos a la función
+`gsva()` con los datos de expresión y una colleción de conjuntos de genes,
+de la siguiente manera.
+
+
+```r
+library(GSVA)
+```
+
+```r
+GSexpr &lt;- gsva(assay(se), c7sym, min.sz=10, max.sz=200)
+```
+
+
+```r
+class(GSexpr)
+```
+
+```
+## [1] "matrix" "array"
+```
+
+```r
+dim(GSexpr)
+```
+
+```
+## [1] 4872   43
+```
+
+```r
+GSexpr[1:5, 1:6]
+```
+
+```
+##                                        GSM213072   GSM213074   GSM213075
+## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP  -0.0317458 -0.03163242 -0.21851507
+## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN  -0.3547799 -0.16355694 -0.07470141
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_UP -0.1517913 -0.10200647 -0.13949513
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_DN -0.2079277 -0.16208933 -0.06607749
+## KAECH_NAIVE_VS_MEMORY_CD8_TCELL_UP    -0.1772390  0.01588483 -0.16946417
+##                                         GSM213076 GSM213078  GSM213080
+## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_UP  -0.31413382 0.1310327 0.04574326
+## KAECH_NAIVE_VS_DAY8_EFF_CD8_TCELL_DN  -0.09994852 0.1717584 0.18773985
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_UP -0.17301179 0.1247394 0.16050134
+## KAECH_NAIVE_VS_DAY15_EFF_CD8_TCELL_DN -0.08818285 0.1464140 0.16744478
+## KAECH_NAIVE_VS_MEMORY_CD8_TCELL_UP    -0.23660689 0.1751549 0.19014024
+```
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Ahora podemos utilizar la matriz de valores de _single sample ES_ para,
+por ejemplo, llevar a cabo un análisis de expresión diferencial directamente
+a nivel de vía biológica con el paquete
+[limma](https://bioconductor.org/packages/limma). Nuestro modelo lineal contempla
+la exposición a la respuesta inflamatoria (FIR) como principal variable explicativa
+y el sexo y el indicador de lote como covariables de ajuste.
+
+
+```r
+library(limma)
+
+mod &lt;- model.matrix(~ FIR + Sex + Batch, colData(se))
+fit &lt;- lmFit(GSexpr, mod)
+fit &lt;- eBayes(fit)
+ttGS &lt;- topTable(fit, coef="FIRyes", n=Inf)
+head(ttGS, n=3)
+```
+
+```
+##                                               logFC      AveExpr        t
+## GSE15733_BM_VS_SPLEEN_MEMORY_CD4_TCELL_UP 0.3561214 -0.002346928 8.622659
+## GSE22886_NAIVE_CD8_TCELL_VS_NEUTROPHIL_DN 0.3955689 -0.007038328 8.307966
+## GSE22886_NAIVE_CD4_TCELL_VS_NEUTROPHIL_DN 0.4177466 -0.012859892 8.105978
+##                                                P.Value    adj.P.Val        B
+## GSE15733_BM_VS_SPLEEN_MEMORY_CD4_TCELL_UP 5.304609e-11 2.584406e-07 14.87420
+## GSE22886_NAIVE_CD8_TCELL_VS_NEUTROPHIL_DN 1.479466e-10 3.603978e-07 13.90519
+## GSE22886_NAIVE_CD4_TCELL_VS_NEUTROPHIL_DN 2.872499e-10 4.664938e-07 13.27735
+```
+
+```r
+sum(ttGS$adj.P.Val &lt; 0.01)
+```
+
+```
+## [1] 402
+```
+
+---
+
+class: small-code
+
+# Métodos GSVA
+
+* Podemos explorar los resultados como si hubieramos hecho el análisis
+a nivel de gen, pero la magnitud del cambio de expresión no se puede interpretar igual.
+
+
+```r
+par(mfrow=c(1, 2))
+hist(ttGS$P.Value, xlab="P-value", main="")
+volcanoplot(fit, coef="FIRyes")
+```
+
+&lt;img src="diapositivas_efcg_files/figure-html/volcanoplot-1.png" height="350px" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Observaciones finales sobre enriquecimiento funcional con GSEA y GSVA
+
+* Los métodos GSEA condensan los perfiles de expresión en vías biológicas.
+Nos permiten detectar cambios de expresión pequeños pero consistentes y
+facilitan la interpretabilidad de los resultados.
+
+* La principal ventaja de los métodos GSEA es que no dependen de una lista
+de genes DE y esto es importante cuando la magnitud de los cambios de expresión
+es pequeña en el sistema biológico que estemos estudiando.
+
+* Hay muchos métodos GSEA, los artículos de revisión de
+[Goeman and Buhlmann (2007)](https://doi.org/10.1093/bioinformatics/btm051), [Hung et al. (2012)](https://doi.org/10.1093/bib/bbr049) y [Geistlinger et al. (2020)](https://doi.org/10.1093/bib/bbz158) pueden servir como guía para
+escoger el más adecuado para la cuestión que se desea abordar.
+
+* Hemos utilizado métodos de filtrado no-específico para conjuntos de genes
+que únicamente restringen el tamaño de estos conjuntos. Otras estrategias
+que pudiesen eliminar conjuntos de genes irrelevantes para nuestro análsis
+probablemente reducirían falsos positivos y incrementarían la potencia
+estadística.
 
 ---
 
@@ -965,34 +1493,68 @@ sessionInfo()
 ## [8] methods   base     
 ## 
 ## other attached packages:
-##  [1] kableExtra_1.3.4     knitr_1.33           GOstats_2.56.0      
-##  [4] graph_1.68.0         Category_2.56.0      Matrix_1.3-2        
-##  [7] GO.db_3.12.1         org.Hs.eg.db_3.12.0  AnnotationDbi_1.52.0
-## [10] IRanges_2.24.1       S4Vectors_0.28.1     Biobase_2.50.0      
-## [13] BiocGenerics_0.36.1  colorout_1.2-2      
+##  [1] limma_3.46.0                GSVA_1.38.2                
+##  [3] SummarizedExperiment_1.20.0 GenomicRanges_1.42.0       
+##  [5] GenomeInfoDb_1.26.7         MatrixGenerics_1.2.1       
+##  [7] matrixStats_0.58.0          fgsea_1.16.0               
+##  [9] GSEABase_1.52.1             annotate_1.68.0            
+## [11] XML_3.99-0.6                kableExtra_1.3.4           
+## [13] knitr_1.33                  GOstats_2.56.0             
+## [15] graph_1.68.0                Category_2.56.0            
+## [17] Matrix_1.3-2                GO.db_3.12.1               
+## [19] org.Hs.eg.db_3.12.0         AnnotationDbi_1.52.0       
+## [21] IRanges_2.24.1              S4Vectors_0.28.1           
+## [23] Biobase_2.50.0              BiocGenerics_0.36.1        
+## [25] colorout_1.2-2             
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.6             svglite_2.0.0          lattice_0.20-41       
-##  [4] digest_0.6.27          mime_0.10              R6_2.5.0              
-##  [7] RSQLite_2.2.7          evaluate_0.14          httr_1.4.2            
-## [10] xaringan_0.21          highr_0.9              rlang_0.4.11          
-## [13] rstudioapi_0.13        annotate_1.68.0        Rgraphviz_2.34.0      
-## [16] jquerylib_0.1.3        blob_1.2.1             rmarkdown_2.8         
-## [19] splines_4.0.3          webshot_0.5.2          servr_0.22            
-## [22] stringr_1.4.0          munsell_0.5.0          RCurl_1.98-1.3        
-## [25] bit_4.0.4              compiler_4.0.3         httpuv_1.6.1          
-## [28] xfun_0.23              systemfonts_1.0.1      pkgconfig_2.0.3       
-## [31] htmltools_0.5.1.1      codetools_0.2-18       XML_3.99-0.6          
-## [34] viridisLite_0.3.0      AnnotationForge_1.32.0 later_1.2.0           
-## [37] bitops_1.0-7           grid_4.0.3             RBGL_1.66.0           
-## [40] jsonlite_1.7.2         xtable_1.8-4           GSEABase_1.52.1       
-## [43] lifecycle_1.0.0        DBI_1.1.1              magrittr_2.0.1        
-## [46] scales_1.1.1           stringi_1.6.2          cachem_1.0.4          
-## [49] genefilter_1.72.1      promises_1.2.0.1       xml2_1.3.2            
-## [52] bslib_0.2.4            vctrs_0.3.8            tools_4.0.3           
-## [55] bit64_4.0.5            glue_1.4.2             fastmap_1.1.0         
-## [58] survival_3.2-10        yaml_2.2.1             colorspace_2.0-0      
-## [61] rvest_1.0.0            memoise_2.0.0          sass_0.3.1
+##  [1] colorspace_2.0-0            ellipsis_0.3.2             
+##  [3] XVector_0.30.0              rstudioapi_0.13            
+##  [5] farver_2.1.0                xaringan_0.21              
+##  [7] bit64_4.0.5                 fansi_0.4.2                
+##  [9] xml2_1.3.2                  codetools_0.2-18           
+## [11] splines_4.0.3               sparseMatrixStats_1.2.1    
+## [13] cachem_1.0.4                jsonlite_1.7.2             
+## [15] servr_0.22                  HDF5Array_1.18.1           
+## [17] compiler_4.0.3              httr_1.4.2                 
+## [19] assertthat_0.2.1            fastmap_1.1.0              
+## [21] BiocSingular_1.6.0          later_1.2.0                
+## [23] htmltools_0.5.1.1           tools_4.0.3                
+## [25] rsvd_1.0.5                  gtable_0.3.0               
+## [27] glue_1.4.2                  GenomeInfoDbData_1.2.4     
+## [29] dplyr_1.0.5                 fastmatch_1.1-0            
+## [31] Rcpp_1.0.6                  jquerylib_0.1.3            
+## [33] rhdf5filters_1.2.1          vctrs_0.3.8                
+## [35] svglite_2.0.0               DelayedMatrixStats_1.12.3  
+## [37] xfun_0.23                   stringr_1.4.0              
+## [39] beachmat_2.6.4              rvest_1.0.0                
+## [41] irlba_2.3.3                 mime_0.10                  
+## [43] lifecycle_1.0.0             zlibbioc_1.36.0            
+## [45] scales_1.1.1                promises_1.2.0.1           
+## [47] RBGL_1.66.0                 rhdf5_2.34.0               
+## [49] SingleCellExperiment_1.12.0 yaml_2.2.1                 
+## [51] memoise_2.0.0               gridExtra_2.3              
+## [53] ggplot2_3.3.3               sass_0.3.1                 
+## [55] stringi_1.6.2               RSQLite_2.2.7              
+## [57] highr_0.9                   genefilter_1.72.1          
+## [59] BiocParallel_1.24.1         rlang_0.4.11               
+## [61] pkgconfig_2.0.3             systemfonts_1.0.1          
+## [63] bitops_1.0-7                evaluate_0.14              
+## [65] lattice_0.20-41             Rhdf5lib_1.12.1            
+## [67] purrr_0.3.4                 labeling_0.4.2             
+## [69] bit_4.0.4                   tidyselect_1.1.0           
+## [71] AnnotationForge_1.32.0      magrittr_2.0.1             
+## [73] R6_2.5.0                    generics_0.1.0             
+## [75] DelayedArray_0.16.3         DBI_1.1.1                  
+## [77] pillar_1.5.1                survival_3.2-10            
+## [79] RCurl_1.98-1.3              tibble_3.1.0               
+## [81] crayon_1.4.1                utf8_1.2.1                 
+## [83] rmarkdown_2.8               grid_4.0.3                 
+## [85] data.table_1.14.0           blob_1.2.1                 
+## [87] Rgraphviz_2.34.0            digest_0.6.27              
+## [89] webshot_0.5.2               xtable_1.8-4               
+## [91] httpuv_1.6.1                munsell_0.5.0              
+## [93] viridisLite_0.3.0           bslib_0.2.4
 ```
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>

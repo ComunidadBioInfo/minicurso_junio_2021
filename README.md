@@ -26,3 +26,8 @@ y [Bioconductor](https://bioconductor.org):
 
 - [org.Hs.eg.db](https://bioconductor.org/packages/org.Hs.eg.db)
 - [GOstats](https://bioconductor.org/packages/GOstats)
+- [GSEABase](https://bioconductor.org/packages/GSEABase)
+- [SummarizedExperiment](https://bioconductor.org/packages/SummarizedExperiment)
+- [fgsea](https://bioconductor.org/packages/fgsea)
+- [GSVA](https://bioconductor.org/packages/GSVA)
+- [limma](https://bioconductor.org/packages/limma)
